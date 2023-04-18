@@ -88,7 +88,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     }
   }, [createCanvasImage, height, onRenderEnd, onRenderStart, pixelationFactor, width]);
 
-  // render the image when the loading state changes to true
+  // render the image when the pixelation factor or the source changes
   useEffect(() => {
     render();
   }, [render, pixelationFactor, source]);

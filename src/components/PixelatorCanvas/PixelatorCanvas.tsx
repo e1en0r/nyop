@@ -50,20 +50,22 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     },
   }));
 
-  const createCanvasImage = useCallback(() => {
-    if (canvasRef.current) {
+  const getContext = useCallback(
+    (canvas: HTMLCanvasElement) => canvas.getContext('2d', { willReadFrequently: true }),
+    [],
+  );
+
+  const renderCanvasImage = useCallback(
+    (context: CanvasRenderingContext2D) => {
       const image = new Image(width, height);
       image.src = source;
 
       if (image.naturalWidth && image.naturalHeight) {
-        const context = canvasRef.current.getContext('2d', { willReadFrequently: true });
         context?.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, width, height);
-
-        return context;
       }
-    }
-    return undefined;
-  }, [width, height, source]);
+    },
+    [width, height, source],
+  );
 
   const renderPixelation = useCallback(
     (context: CanvasRenderingContext2D) => {
@@ -113,15 +115,26 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     if (canvasRef.current) {
       onRenderStart?.();
 
-      const context = createCanvasImage();
-      if (context) {
-        pixelate && renderPixelation(context);
-        lined && renderLines(context);
+      const offScreenCanvas = document.createElement('canvas');
+      offScreenCanvas.width = canvasRef.current.width;
+      offScreenCanvas.height = canvasRef.current.height;
+
+      const offScreenContext = getContext(offScreenCanvas);
+      if (offScreenContext) {
+        renderCanvasImage(offScreenContext);
+        pixelate && renderPixelation(offScreenContext);
+        lined && renderLines(offScreenContext);
+
+        const onScreenContext = getContext(canvasRef.current);
+        if (onScreenContext) {
+          onScreenContext.drawImage(offScreenCanvas, 0, 0);
+          onScreenContext.save();
+        }
       }
 
       onRenderEnd?.();
     }
-  }, [createCanvasImage, lined, onRenderEnd, onRenderStart, pixelate, renderLines, renderPixelation]);
+  }, [renderCanvasImage, getContext, lined, onRenderEnd, onRenderStart, pixelate, renderLines, renderPixelation]);
 
   // render the image when the pixelation factor or the source changes
   useEffect(() => {

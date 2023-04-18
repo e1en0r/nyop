@@ -1,17 +1,17 @@
-.imageContainer {
-  background-color: var(--pixelator-image-container-background-color);
+.container {
+  background-color: var(--pixelator-container-background-color);
   position: relative;
-  
-  &.imageContainer--light {
-    --pixelator-image-container-background-color: $light-color-BG10;
+
+  &.container--light {
+    --pixelator-container-background-color: $light-color-BG10;
   }
 
-  &.imageContainer--dark {
-    --pixelator-image-container-background-color: $dark-color-BG10;
+  &.container--dark {
+    --pixelator-container-background-color: $dark-color-BG10;
   }
 }
 
-.resultImage {
+.canvas {
   position: absolute;
   top: 0;
   left: 0;

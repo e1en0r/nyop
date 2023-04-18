@@ -1,0 +1,14 @@
+.highlightSquare {
+  position: absolute;
+  border: 1px solid var(--phork-accent-color, var(--highlight-square-border-color));
+  pointer-events: none;
+  z-index: 10;
+
+  &.highlightSquare--light {
+    --highlight-square-border-color: $light-color-P30;
+  }
+
+  &.highlightSquare--dark {
+    --highlight-square-border-color: $dark-color-P30;
+  }
+}

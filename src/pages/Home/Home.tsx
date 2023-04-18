@@ -21,11 +21,13 @@ import {
   useGetWidth,
   useSafeTimeout,
 } from '@phork/phorkit';
+import positionStyles from '@phork/phorkit/styles/modules/common/Position.module.css';
 import { PAGE_MIN_WIDTH } from 'config/sizes';
 import { APP_NAME } from 'config/strings';
 import { ColorPreview } from 'components/ColorPreview';
 import { Coords } from 'components/Coords';
 import { FileUpload, FileUploadPreview, FileUploadPreviewProps } from 'components/FileUpload';
+import { HighlightSquare } from 'components/HighlightSquare';
 import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
 import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'components/PixelatorCanvas';
@@ -69,6 +71,7 @@ export function Home(): JSX.Element {
   const {
     color,
     coords,
+    highlight,
     handleCanvasClick,
     handleCanvasMove,
     handleCanvasExit,
@@ -182,18 +185,23 @@ export function Home(): JSX.Element {
                 </Header>
               </Rhythm>
 
-              <PixelatorCanvas
-                height={previewHeight}
-                lined={lined}
-                onClick={handleCanvasClick}
-                onMouseMove={handleCanvasMove}
-                onMouseOut={handleCanvasExit}
-                pixelate={pixelate}
-                pixelationFactor={pixelationFactor}
-                ref={canvasRef}
-                source={source}
-                width={previewWidth}
-              />
+              <div className={positionStyles['position-relative']}>
+                <PixelatorCanvas
+                  height={previewHeight}
+                  lined={lined}
+                  onClick={handleCanvasClick}
+                  onMouseMove={handleCanvasMove}
+                  onMouseOut={handleCanvasExit}
+                  pixelate={pixelate}
+                  pixelationFactor={pixelationFactor}
+                  ref={canvasRef}
+                  source={source}
+                  width={previewWidth}
+                />
+                {highlight && pixelationFactor && (
+                  <HighlightSquare height={pixelationFactor} width={pixelationFactor} x={highlight.x} y={highlight.y} />
+                )}
+              </div>
             </Flex>
           ) : (
             <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: formWidth }}>

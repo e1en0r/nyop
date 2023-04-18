@@ -13,6 +13,7 @@ export type UseMouseEventsProps = {
 export type UseMouseEventsResponse = {
   color?: string;
   coords?: CanvasMouseEventCoords;
+  highlight?: CanvasMouseEventCoords;
   handleCanvasClick: React.MouseEventHandler<HTMLDivElement>;
   handleCanvasMove: React.MouseEventHandler<HTMLDivElement>;
   handleCanvasExit: React.MouseEventHandler<HTMLDivElement>;
@@ -22,19 +23,25 @@ export type UseMouseEventsResponse = {
 export function useMouseEvents({ canvasRef, pixelationFactor }: UseMouseEventsProps): UseMouseEventsResponse {
   const [color, setColor] = useState<string>();
   const [coords, setCoords] = useState<CanvasMouseEventCoords>();
+  const [highlight, setHighlight] = useState<CanvasMouseEventCoords>();
 
   const getCanvasEventCoords = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const rect = canvasRef.current?.canvas?.getBoundingClientRect();
       if (rect) {
+        const gridX = event.clientX - rect.left;
+        const gridY = event.clientY - rect.top;
+
         return {
-          gridX: event.clientX - rect.left,
-          gridY: event.clientY - rect.top,
+          gridX,
+          gridY,
+          x: pixelationFactor && gridX !== undefined ? Math.floor(gridX / pixelationFactor) : undefined,
+          y: pixelationFactor && gridY !== undefined ? Math.floor(gridY / pixelationFactor) : undefined,
         };
       }
-      return {};
+      return undefined;
     },
-    [canvasRef],
+    [canvasRef, pixelationFactor],
   );
 
   const getCanvasCoordsColor = useCallback(
@@ -43,7 +50,7 @@ export function useMouseEvents({ canvasRef, pixelationFactor }: UseMouseEventsPr
       if (canvas) {
         const context = canvasRef?.current?.canvas?.getContext('2d', { willReadFrequently: true });
         if (context) {
-          const { gridX, gridY } = getCanvasEventCoords(event);
+          const { gridX, gridY } = getCanvasEventCoords(event) || {};
           if (gridX !== undefined && gridY !== undefined) {
             const pixelData = context.getImageData(gridX, gridY, 1, 1).data;
             return ('000000' + rgbToHex(pixelData[0], pixelData[1], pixelData[2])).slice(-6).toUpperCase();
@@ -57,19 +64,27 @@ export function useMouseEvents({ canvasRef, pixelationFactor }: UseMouseEventsPr
 
   const handleCanvasClick = useCallback<React.MouseEventHandler<HTMLDivElement>>(
     event => {
+      const { x, y } = getCanvasEventCoords(event) || {};
+      setHighlight(currentHighlight => {
+        if (currentHighlight?.x === x && currentHighlight?.y === y) {
+          return undefined;
+        }
+        if (x !== undefined && y !== undefined) {
+          return { x, y };
+        }
+        return undefined;
+      });
+
       copy(getCanvasCoordsColor(event) || '');
     },
-    [getCanvasCoordsColor],
+    [getCanvasCoordsColor, getCanvasEventCoords],
   );
 
   const handleCanvasMove = useCallback<React.MouseEventHandler<HTMLDivElement>>(
     event => {
       setColor(getCanvasCoordsColor(event));
 
-      const { gridX, gridY } = getCanvasEventCoords(event);
-      const x = pixelationFactor && gridX !== undefined ? Math.floor(gridX / pixelationFactor) : undefined;
-      const y = pixelationFactor && gridY !== undefined ? Math.floor(gridY / pixelationFactor) : undefined;
-
+      const { x, y } = getCanvasEventCoords(event) || {};
       setCoords(currentCoords => {
         if (currentCoords?.x === x && currentCoords?.y === y) {
           return currentCoords;
@@ -80,7 +95,7 @@ export function useMouseEvents({ canvasRef, pixelationFactor }: UseMouseEventsPr
         return undefined;
       });
     },
-    [getCanvasCoordsColor, getCanvasEventCoords, pixelationFactor],
+    [getCanvasCoordsColor, getCanvasEventCoords],
   );
 
   const handleCanvasExit = useCallback<React.MouseEventHandler<HTMLDivElement>>(() => {
@@ -97,11 +112,12 @@ export function useMouseEvents({ canvasRef, pixelationFactor }: UseMouseEventsPr
     () => ({
       color,
       coords,
+      highlight,
       handleCanvasClick,
       handleCanvasMove,
       handleCanvasExit,
       reset,
     }),
-    [color, coords, handleCanvasClick, handleCanvasExit, handleCanvasMove, reset],
+    [color, coords, highlight, handleCanvasClick, handleCanvasExit, handleCanvasMove, reset],
   );
 }

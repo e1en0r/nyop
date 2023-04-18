@@ -131,7 +131,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
 
       onRenderEnd?.();
     }
-  }, [renderCanvasImage, getContext, lined, onRenderEnd, onRenderStart, pixelate, renderLines, renderPixelation]);
+  }, [onRenderStart, getContext, onRenderEnd, renderCanvasImage, pixelate, renderPixelation, lined, renderLines]);
 
   // render the image when the pixelation factor or the source changes
   useEffect(() => {
@@ -140,11 +140,11 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
 
   return (
     <div
-      className={cx(styles.imageContainer, themeId && !unthemed && styles[`imageContainer--${themeId}`], className)}
+      className={cx(styles.container, themeId && !unthemed && styles[`container--${themeId}`], className)}
       style={{ width, height, ...style }}
       {...props}
     >
-      <canvas className={styles.resultImage} height={height} ref={canvasRef} width={width} />
+      <canvas className={styles.canvas} height={height} ref={canvasRef} width={width} />
     </div>
   );
 });

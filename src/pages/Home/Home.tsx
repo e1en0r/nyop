@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import {
   ArrowLeftIcon,
   Button,
+  Divider,
   Flex,
   Footer,
   Header,
@@ -15,6 +16,8 @@ import {
   SpinnerIcon,
   TimesIcon,
   ToastContext,
+  Toggle,
+  ToggleProps,
   Typography,
   useGetWidth,
   useSafeTimeout,
@@ -27,6 +30,7 @@ import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
 import { PixelatorCanvas, PixelatorCanvasHandles, PixelatorCanvasProps } from 'components/PixelatorCanvas';
 import { SizePicker, SizePickerProps, SizePickerValue } from 'components/SizePicker';
+import { rgbToHex } from 'utils/color';
 import { getPaperSideOffset } from 'utils/size';
 import { createImageUploader } from 'utils/upload';
 import { HelpIcon } from 'icons/HelpIcon';
@@ -36,18 +40,14 @@ const FORM_MAX_WIDTH = 500;
 const PREVIEW_MAX_WIDTH = 1200;
 const PIXELS_PER_GRID = 25;
 
-const rgbToHex = (r: number, g: number, b: number): string => {
-  if (r > 255 || g > 255 || b > 255) throw 'Invalid color component';
-  return ((r << 16) | (g << 8) | b).toString(16);
-};
-
 export function Home(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
   const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
   const [color, setColor] = useState<string>();
   const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
   const [loading, setLoading] = useState(false);
-  const [showPixelated, setShowPixelated] = useState(false);
+  const [pixelate, setPixelate] = useState(true);
+  const [showCanvas, setShowCanvas] = useState(false);
   const [source, setSource] = useState<string | undefined>();
   const [valid, setValid] = useState<boolean>();
 
@@ -62,23 +62,21 @@ export function Home(): JSX.Element {
   const { createNotification } = useContext(ToastContext);
 
   const reset = useCallback(() => {
+    setColor(undefined);
+    setShowCanvas(false);
     setSource(undefined);
-    setShowPixelated(false);
     setValid(false);
-    setColor(undefined);
   }, []);
 
-  const hidePixelated = useCallback(() => {
+  const setHideCanvas = useCallback(() => {
+    setColor(undefined);
     setLoading(false);
-    setShowPixelated(false);
-    setColor(undefined);
+    setShowCanvas(false);
   }, []);
 
-  // by showing on a timeout we can show the spinner before the canvas halts everything
-  const handleSubmit = useCallback(() => {
-    setLoading(true);
-    setSafeTimeout(() => setShowPixelated(true), 200);
-  }, [setSafeTimeout]);
+  const togglePixelate = useCallback<ToggleProps['onChange']>((_event, checked) => {
+    setPixelate(!checked);
+  }, []);
 
   const displayErrorToast = useCallback(
     (title: string, content: string) => {
@@ -91,18 +89,9 @@ export function Home(): JSX.Element {
     [createNotification],
   );
 
-  const handleFiles = useMemo(
-    () => createImageUploader({ setSource, handleError: displayErrorToast }),
-    [displayErrorToast],
-  );
-
-  const handleOnValidateImageChange = useCallback<FileUploadPreviewProps['onValidate']>(value => {
-    setValid(value);
-  }, []);
-
-  const handleGridSizeChange = useCallback<SizePickerProps['onChange']>((_event, value) => {
-    setGridSize(value);
-  }, []);
+  const handleCanvasClick = useCallback<NonNullable<PixelatorCanvasProps['onClick']>>(() => {
+    copy(color || '');
+  }, [color]);
 
   const handleCanvasMove = useCallback<NonNullable<PixelatorCanvasProps['onMouseMove']>>(event => {
     const canvas = canvasRef.current?.canvas;
@@ -116,9 +105,24 @@ export function Home(): JSX.Element {
     }
   }, []);
 
-  const handleCanvasClick = useCallback<NonNullable<PixelatorCanvasProps['onClick']>>(() => {
-    copy(color || '');
-  }, [color]);
+  const handleFiles = useMemo(
+    () => createImageUploader({ setSource, handleError: displayErrorToast }),
+    [displayErrorToast],
+  );
+
+  const handleGridSizeChange = useCallback<SizePickerProps['onChange']>((_event, value) => {
+    setGridSize(value);
+  }, []);
+
+  const handleOnValidateImageChange = useCallback<FileUploadPreviewProps['onValidate']>(value => {
+    setValid(value);
+  }, []);
+
+  // [TODO]: find non-blocking way to render canvas; until then use a timeout to show the spinner
+  const handleSubmit = useCallback(() => {
+    setLoading(true);
+    setSafeTimeout(() => setShowCanvas(true), 200);
+  }, [setSafeTimeout]);
 
   return (
     <Fragment>
@@ -128,7 +132,7 @@ export function Home(): JSX.Element {
 
       <Fragment>
         <PagePaper centered flexible role="main">
-          {showPixelated && source ? (
+          {showCanvas && source ? (
             <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: previewWidth }}>
               <Rhythm mb={4}>
                 <Header>
@@ -136,7 +140,7 @@ export function Home(): JSX.Element {
                     <IconTextButton
                       color="neutral"
                       icon={<ArrowLeftIcon scale="medium" />}
-                      onClick={hidePixelated}
+                      onClick={setHideCanvas}
                       shape="brick"
                       size="relative"
                       weight="inline"
@@ -178,7 +182,7 @@ export function Home(): JSX.Element {
                 onClick={handleCanvasClick}
                 onMouseMove={handleCanvasMove}
                 pixelationFactor={
-                  valid && gridSize
+                  pixelate && valid && gridSize
                     ? Math.min(
                         Math.floor(previewWidth / (gridSize.x * PIXELS_PER_GRID)),
                         Math.floor(previewHeight / (gridSize.y * PIXELS_PER_GRID)),
@@ -233,8 +237,21 @@ export function Home(): JSX.Element {
                       </InlineTextTooltip>
                     </Header>
                     <Rhythm mt={5}>
-                      <SizePicker full onChange={handleGridSizeChange} value={gridSize} />
+                      <SizePicker
+                        full
+                        disabled={!pixelate}
+                        onChange={handleGridSizeChange}
+                        value={pixelate ? gridSize : undefined}
+                      />
                     </Rhythm>
+
+                    <Rhythm my={4}>
+                      <Divider orientation="horizontal" variant="primary" />
+                    </Rhythm>
+
+                    <Toggle checked={!pixelate} onChange={togglePixelate}>
+                      {`Don't pixelate the image`}
+                    </Toggle>
                   </InputContainer>
                 </Rhythm>
               </Rhythm>
@@ -257,7 +274,7 @@ export function Home(): JSX.Element {
                       size="relative"
                       weight="outlined"
                     >
-                      Pixelate
+                      Submit
                     </Button>
                   </Typography>
                 </Footer>

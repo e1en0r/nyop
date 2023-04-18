@@ -61,7 +61,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     return undefined;
   }, [width, height, source]);
 
-  const pixelateImage = useCallback(() => {
+  const render = useCallback(() => {
     if (canvasRef.current) {
       onRenderStart?.();
 
@@ -88,10 +88,10 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     }
   }, [createCanvasImage, height, onRenderEnd, onRenderStart, pixelationFactor, width]);
 
-  // pixelate the image when the loading state changes to true
+  // render the image when the loading state changes to true
   useEffect(() => {
-    pixelateImage();
-  }, [pixelateImage, pixelationFactor, source]);
+    render();
+  }, [render, pixelationFactor, source]);
 
   return (
     <div
@@ -99,11 +99,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
       style={{ width, height, ...style }}
       {...props}
     >
-      {pixelationFactor ? (
-        <canvas className={styles.resultImage} height={height} ref={canvasRef} width={width} />
-      ) : (
-        <img alt="source" height={height} src={source} width={width} />
-      )}
+      <canvas className={styles.resultImage} height={height} ref={canvasRef} width={width} />
     </div>
   );
 });

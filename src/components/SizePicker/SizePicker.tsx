@@ -10,20 +10,22 @@ const GRID_MAPPER = Array(GRID_SIZE)
 export type SizePickerValue = { x: number; y: number };
 
 export type SizePickerProps = Omit<FlexProps, 'direction' | 'onChange'> & {
+  disabled?: boolean;
   onChange: (
     event: React.MouseEvent<Element> | React.KeyboardEvent<Element> | React.TouchEvent<Element>,
     value: SizePickerValue,
   ) => void;
-  value: SizePickerValue;
+  value?: SizePickerValue;
 };
 
-export function SizePicker({ onChange, value = { x: 1, y: 1 }, ...props }: SizePickerProps): JSX.Element {
+export function SizePicker({ disabled, onChange, value, ...props }: SizePickerProps): JSX.Element {
   return (
     <Flex direction="row" justifyContent="space-between" {...props}>
       <Rhythm my={3}>
         {GRID_MAPPER.map(filled => (
           <Button
-            color={value.x === filled && value.y === filled ? 'primary' : 'neutral'}
+            color={value?.x === filled && value?.y === filled ? 'primary' : 'neutral'}
+            disabled={disabled}
             key={`square${filled}`}
             onClick={e => onChange(e, { x: filled, y: filled })}
             shape="brick"

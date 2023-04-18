@@ -24,7 +24,7 @@
     "about-stylelint": "echo '🤖🖍️ Run stylelint and fix the problems' && exit 0",
     "about-test-watch": "echo '🤖👁️‍🗨️ Run the Jest tests and watch for changes' && exit 0",
     "about-test": "echo '🤖 Run the Jest tests' && exit 0",
-    "about-validate": "echo '🤖 Validates the files with eslint and stylelint' && exit 0",
+    "about-validate": "echo '🤖 Validates the files with eslint and s|tylelint' && exit 0",
     "about-watch": "echo '🤖👁️‍🗨️ Watch for typescript bugs' && exit 0",
     "build-deps": "npm-run-all --serial clean-icons gen-icons gen-json-vars",
     "build": "NODE_ENV=production && npx webpack --config webpack.prod.js",

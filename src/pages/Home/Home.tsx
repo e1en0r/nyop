@@ -2,11 +2,13 @@ import copy from 'copy-to-clipboard';
 import { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
+  ArrowLeftIcon,
   Button,
   Flex,
   Footer,
   Header,
   IconButton,
+  IconTextButton,
   IconToast,
   InlineTextTooltip,
   Rhythm,
@@ -25,8 +27,10 @@ import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
 import { PixelatorCanvas, PixelatorCanvasHandles, PixelatorCanvasProps } from 'components/PixelatorCanvas';
 import { SizePicker, SizePickerProps, SizePickerValue } from 'components/SizePicker';
+import { getPaperSideOffset } from 'utils/size';
 import { createImageUploader } from 'utils/upload';
 import { HelpIcon } from 'icons/HelpIcon';
+import { InfoIcon } from 'icons/InfoIcon';
 
 const FORM_MAX_WIDTH = 500;
 const PREVIEW_MAX_WIDTH = 1200;
@@ -38,19 +42,21 @@ const rgbToHex = (r: number, g: number, b: number): string => {
 };
 
 export function Home(): JSX.Element {
-  const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
-  const [source, setSource] = useState<string | undefined>();
-  const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
-  const [valid, setValid] = useState<boolean>();
-  const [showPixelated, setShowPixelated] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [color, setColor] = useState<string>();
   const { setSafeTimeout } = useSafeTimeout();
+  const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
+  const [color, setColor] = useState<string>();
+  const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
+  const [loading, setLoading] = useState(false);
+  const [showPixelated, setShowPixelated] = useState(false);
+  const [source, setSource] = useState<string | undefined>();
+  const [valid, setValid] = useState<boolean>();
 
-  const formWidth = Math.max(PAGE_MIN_WIDTH, Math.min(FORM_MAX_WIDTH, useGetWidth() || 0));
+  const viewportWidth = useGetWidth() || 0;
+  const sideOffsetWidth = getPaperSideOffset(viewportWidth) * 2;
+  const formWidth = Math.max(PAGE_MIN_WIDTH, Math.min(FORM_MAX_WIDTH, viewportWidth - sideOffsetWidth || 0));
   const formHeight = formWidth; // for now only square images are supported
 
-  const previewWidth = Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, useGetWidth() || 0));
+  const previewWidth = Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, viewportWidth - sideOffsetWidth || 0));
   const previewHeight = previewWidth; // for now only square images are supported
 
   const { createNotification } = useContext(ToastContext);
@@ -127,12 +133,43 @@ export function Home(): JSX.Element {
               <Rhythm mb={4}>
                 <Header>
                   <Typography<'div'> as="div" size="2xlarge">
-                    <Button color="neutral" onClick={hidePixelated} shape="brick" size="relative" weight="inline">
-                      &lt; Back
-                    </Button>
+                    <IconTextButton
+                      color="neutral"
+                      icon={<ArrowLeftIcon scale="medium" />}
+                      onClick={hidePixelated}
+                      shape="brick"
+                      size="relative"
+                      weight="inline"
+                    >
+                      Back
+                    </IconTextButton>
                   </Typography>
 
-                  {color && <ColorPreview color={color} />}
+                  <Flex alignItems="center" direction="row">
+                    {color && <ColorPreview color={color} />}
+
+                    <Rhythm ml={3}>
+                      <InlineTextTooltip
+                        hoverable
+                        withoutTogglerFocusStyle
+                        closeDelay={500}
+                        layout="vertical"
+                        position="left-top"
+                        toggler={
+                          <Rhythm mx={1}>
+                            <IconButton color="neutral">
+                              <InfoIcon scale="large" />
+                            </IconButton>
+                          </Rhythm>
+                        }
+                        triangleBorderWidth={2}
+                      >
+                        <Typography size="xlarge">
+                          Clicking anywhere in the canvas will copy its color to your clipboard
+                        </Typography>
+                      </InlineTextTooltip>
+                    </Rhythm>
+                  </Flex>
                 </Header>
               </Rhythm>
 
@@ -173,12 +210,13 @@ export function Home(): JSX.Element {
                       <Typography color="primary" size="5xlarge">
                         Choose your NYOP layout
                       </Typography>
+
                       <InlineTextTooltip
                         hoverable
                         withoutTogglerFocusStyle
                         closeDelay={500}
                         layout="vertical"
-                        position="top-center"
+                        position="left-top"
                         toggler={
                           <Rhythm mx={1}>
                             <IconButton color="neutral">
@@ -204,7 +242,7 @@ export function Home(): JSX.Element {
               <Rhythm mt={9}>
                 <Footer>
                   <Typography<'div'> as="div" size="4xlarge">
-                    <Button color="neutral" onClick={reset} shape="brick" size="relative" weight="ghost">
+                    <Button color="neutral" onClick={reset} shape="brick" size="relative" weight="inline">
                       Reset
                     </Button>
                   </Typography>

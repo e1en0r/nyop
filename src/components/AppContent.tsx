@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { Suspense } from 'react';
-import { Route, Switch } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ErrorBoundary, Paper, PaperProps, SizeProvider } from '@phork/phorkit';
 import { LineLoader } from 'components/LineLoader';
@@ -24,12 +24,10 @@ export const AppContent = (props: AppContentProps): React.ReactElement => {
           <ViewportPaper scrollable color="primary" ref={ref} {...props}>
             <ErrorBoundary variant="page">
               <Suspense fallback={<LineLoader fixed position="top" />}>
-                <Switch>
-                  <Route exact component={Home} path="/" />
-                  <Route>
-                    <FourOhFour />
-                  </Route>
-                </Switch>
+                <Routes>
+                  <Route element={<Home />} path="/" />
+                  <Route element={<FourOhFour />} path="*" />
+                </Routes>
               </Suspense>
             </ErrorBoundary>
           </ViewportPaper>

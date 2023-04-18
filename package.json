@@ -1,11 +1,11 @@
 {
-  "name": "@phork/phorkish",
-  "description": "phorkish.com",
+  "name": "@e1en0r/nypop",
+  "description": "nyop.phorkish.com",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/phork/phorkish.git"
+    "url": "https://github.com/e1en0r/nyop.git"
   },
   "scripts": {
     "about-all": "node ./scripts/pkg-about-scripts.js",

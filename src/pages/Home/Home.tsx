@@ -105,7 +105,7 @@ export function Home(): JSX.Element {
   );
 
   const handleCanvasClick = useCallback<NonNullable<PixelatorCanvasProps['onClick']>>(() => {
-    copy(color || '');
+    copy(color?.replace('#', '') || '');
   }, [color]);
 
   const handleCanvasMove = useCallback<NonNullable<PixelatorCanvasProps['onMouseMove']>>(

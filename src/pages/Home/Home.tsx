@@ -1,4 +1,3 @@
-import copy from 'copy-to-clipboard';
 import { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
@@ -29,9 +28,8 @@ import { Coords } from 'components/Coords';
 import { FileUpload, FileUploadPreview, FileUploadPreviewProps } from 'components/FileUpload';
 import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
-import { PixelatorCanvas, PixelatorCanvasHandles, PixelatorCanvasProps } from 'components/PixelatorCanvas';
+import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'components/PixelatorCanvas';
 import { SizePicker, SizePickerProps, SizePickerValue } from 'components/SizePicker';
-import { rgbToHex } from 'utils/color';
 import { getPaperSideOffset } from 'utils/size';
 import { createImageUploader } from 'utils/upload';
 import { HelpIcon } from 'icons/HelpIcon';
@@ -44,8 +42,6 @@ const PIXELS_PER_GRID = 25;
 export function Home(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
   const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
-  const [color, setColor] = useState<string>();
-  const [coords, setCoords] = useState<{ x: number; y: number } | undefined>();
   const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
   const [lined, setLined] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -70,20 +66,29 @@ export function Home(): JSX.Element {
         )
       : undefined;
 
+  const {
+    color,
+    coords,
+    handleCanvasClick,
+    handleCanvasMove,
+    handleCanvasExit,
+    reset: resetMouseData,
+  } = useMouseEvents({ canvasRef, pixelationFactor });
+
   const { createNotification } = useContext(ToastContext);
 
   const reset = useCallback(() => {
-    setColor(undefined);
+    resetMouseData();
     setShowCanvas(false);
     setSource(undefined);
     setValid(false);
-  }, []);
+  }, [resetMouseData]);
 
   const setHideCanvas = useCallback(() => {
-    setColor(undefined);
+    resetMouseData();
     setLoading(false);
     setShowCanvas(false);
-  }, []);
+  }, [resetMouseData]);
 
   const toggleLined = useCallback<ToggleProps['onChange']>((_event, checked) => {
     setLined(checked);
@@ -103,39 +108,6 @@ export function Home(): JSX.Element {
     },
     [createNotification],
   );
-
-  const handleCanvasClick = useCallback<NonNullable<PixelatorCanvasProps['onClick']>>(() => {
-    copy(color?.replace('#', '') || '');
-  }, [color]);
-
-  const handleCanvasMove = useCallback<NonNullable<PixelatorCanvasProps['onMouseMove']>>(
-    event => {
-      const canvas = canvasRef.current?.canvas;
-      if (canvas) {
-        const context = canvasRef.current?.canvas?.getContext('2d', { willReadFrequently: true });
-        if (context) {
-          const rect = canvas.getBoundingClientRect();
-          const gridX = event.clientX - rect.left;
-          const gridY = event.clientY - rect.top;
-          const pixelData = context.getImageData(gridX, gridY, 1, 1).data;
-
-          setColor('#' + ('000000' + rgbToHex(pixelData[0], pixelData[1], pixelData[2])).slice(-6));
-          setCoords(currentCoords => {
-            const coords = pixelationFactor
-              ? { x: Math.floor(gridX / pixelationFactor), y: Math.floor(gridY / pixelationFactor) }
-              : undefined;
-            return coords?.x === currentCoords?.x && coords?.y === currentCoords?.y ? currentCoords : coords;
-          });
-        }
-      }
-    },
-    [pixelationFactor],
-  );
-
-  const handleCanvasExit = useCallback<NonNullable<PixelatorCanvasProps['onMouseOut']>>(() => {
-    setCoords(undefined);
-    setColor(undefined);
-  }, []);
 
   const handleFiles = useMemo(
     () => createImageUploader({ setSource, handleError: displayErrorToast }),
@@ -184,7 +156,7 @@ export function Home(): JSX.Element {
                   <Flex alignItems="center" direction="row">
                     <Rhythm ml={3}>
                       {coords && <Coords x={coords.x} y={coords.y} />}
-                      {color && <ColorPreview color={color} />}
+                      {color && <ColorPreview color={`#${color}`} />}
 
                       <InlineTextTooltip
                         hoverable

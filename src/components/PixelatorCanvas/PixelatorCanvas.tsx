@@ -2,10 +2,7 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { ThemeProps, useThemeId } from '@phork/phorkit';
 import styles from './PixelatorCanvas.module.css';
-
-export type PixelatorCanvasHandles = {
-  canvas: HTMLCanvasElement | null;
-};
+import { PixelatorCanvasHandles } from './types';
 
 export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
   ThemeProps & {

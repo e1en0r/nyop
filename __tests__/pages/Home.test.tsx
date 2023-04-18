@@ -6,6 +6,6 @@ describe('<Home />', () => {
   it('should render', () => {
     const { getByRole } = render(<Home />);
 
-    expect(getByRole('home')).toBeTruthy();
+    expect(getByRole('main')).toBeTruthy();
   });
 });

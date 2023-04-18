@@ -1,5 +1,5 @@
 import copy from 'copy-to-clipboard';
-import React, { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
   Button,

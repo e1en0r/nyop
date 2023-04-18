@@ -10,7 +10,12 @@ export function ColorPreview({ className, color, style, ...props }: ColorPreview
   return (
     <Flex alignItems="center" direction="row" {...props}>
       <div className={cx(styles.colorBox, className)} style={{ backgroundColor: color, ...style }} />
-      <Typography size="3xlarge" variants={['letter-spacing-comfy', 'uppercase']} weight="bold">
+      <Typography
+        className={styles.colorText}
+        size="3xlarge"
+        variants={['letter-spacing-comfy', 'uppercase']}
+        weight="bold"
+      >
         {color}
       </Typography>
     </Flex>

@@ -3,7 +3,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { FC, ReactElement } from 'react';
 import { ThemeProvider } from '@phork/phorkit';
 
-const AllTheProviders: FC = ({ children }) => {
+const AllTheProviders: FC = ({ children }: { children?: React.ReactNode }) => {
   return <ThemeProvider themeId="light">{children}</ThemeProvider>;
 };
 

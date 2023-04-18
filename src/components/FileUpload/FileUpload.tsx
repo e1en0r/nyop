@@ -65,7 +65,7 @@ export function FileUpload({
       className={styles.form}
       id={componentId}
       onDragEnter={handleDrag}
-      onSubmit={useCallback(e => e.preventDefault, [])}
+      onSubmit={useCallback((e: React.FormEvent) => e.preventDefault, [])}
       {...props}
     >
       <input

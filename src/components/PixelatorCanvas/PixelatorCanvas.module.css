@@ -1,0 +1,19 @@
+.imageContainer {
+  background-color: var(--pixelator-image-container-background-color);
+  position: relative;
+  
+  &.imageContainer--light {
+    --pixelator-image-container-background-color: $light-color-BG10;
+  }
+
+  &.imageContainer--dark {
+    --pixelator-image-container-background-color: $dark-color-BG10;
+  }
+}
+
+.resultImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}

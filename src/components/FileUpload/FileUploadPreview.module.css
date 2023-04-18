@@ -1,0 +1,12 @@
+.container {
+  background-color: var(--file-upload-preview-background-color);
+  position: relative;
+
+  &.imageContainer--light {
+    --file-upload-preview-background-color: $light-color-BG10;
+  }
+
+  &.imageContainer--dark {
+    --file-upload-preview-background-color: $dark-color-BG10;
+  }
+}

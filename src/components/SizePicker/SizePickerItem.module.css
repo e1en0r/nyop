@@ -1,0 +1,21 @@
+.container {
+  /* to be defined inline
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  */
+  display: grid;
+  grid-column-gap: 1px;
+  grid-row-gap: 1px;
+  width: 70px;
+  height: 70px;
+}
+
+.item {
+  background: currentColor;
+  grid-area: auto;
+  opacity: 0.2;
+
+  &.item--filled {
+    opacity: 1;
+  }
+}

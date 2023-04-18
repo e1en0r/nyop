@@ -231,8 +231,14 @@ export function Home(): JSX.Element {
                         triangleBorderWidth={2}
                       >
                         <Typography size="xlarge">
-                          Each NYOP square is ${`${PIXELS_PER_GRID}x${PIXELS_PER_GRID}`}. If you have a block of squares
-                          you can draw a more detailed image.
+                          <p>
+                            Each NYOP square is {`${PIXELS_PER_GRID}x${PIXELS_PER_GRID}`}. If you have a block of
+                            squares you can draw a more detailed image.
+                          </p>
+                          <p>
+                            If your image is already pixelated you can choose to not pixelate it and just use the tool
+                            to copy the colors.
+                          </p>
                         </Typography>
                       </InlineTextTooltip>
                     </Header>

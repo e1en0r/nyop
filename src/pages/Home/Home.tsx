@@ -24,7 +24,8 @@ import {
 } from '@phork/phorkit';
 import { PAGE_MIN_WIDTH } from 'config/sizes';
 import { APP_NAME } from 'config/strings';
-import { ColorPreview } from 'components/ColorPreview/ColorPreview';
+import { ColorPreview } from 'components/ColorPreview';
+import { Coords } from 'components/Coords';
 import { FileUpload, FileUploadPreview, FileUploadPreviewProps } from 'components/FileUpload';
 import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
@@ -44,7 +45,9 @@ export function Home(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
   const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
   const [color, setColor] = useState<string>();
+  const [coords, setCoords] = useState<{ x: number; y: number } | undefined>();
   const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
+  const [lined, setLined] = useState(true);
   const [loading, setLoading] = useState(false);
   const [pixelate, setPixelate] = useState(true);
   const [showCanvas, setShowCanvas] = useState(false);
@@ -59,6 +62,14 @@ export function Home(): JSX.Element {
   const previewWidth = Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, viewportWidth - sideOffsetWidth || 0));
   const previewHeight = previewWidth; // for now only square images are supported
 
+  const pixelationFactor =
+    valid && gridSize
+      ? Math.min(
+          Math.floor(previewWidth / (gridSize.x * PIXELS_PER_GRID)),
+          Math.floor(previewHeight / (gridSize.y * PIXELS_PER_GRID)),
+        )
+      : undefined;
+
   const { createNotification } = useContext(ToastContext);
 
   const reset = useCallback(() => {
@@ -72,6 +83,10 @@ export function Home(): JSX.Element {
     setColor(undefined);
     setLoading(false);
     setShowCanvas(false);
+  }, []);
+
+  const toggleLined = useCallback<ToggleProps['onChange']>((_event, checked) => {
+    setLined(checked);
   }, []);
 
   const togglePixelate = useCallback<ToggleProps['onChange']>((_event, checked) => {
@@ -93,16 +108,33 @@ export function Home(): JSX.Element {
     copy(color || '');
   }, [color]);
 
-  const handleCanvasMove = useCallback<NonNullable<PixelatorCanvasProps['onMouseMove']>>(event => {
-    const canvas = canvasRef.current?.canvas;
-    if (canvas) {
-      const context = canvasRef.current?.canvas?.getContext('2d', { willReadFrequently: true });
-      if (context) {
-        const rect = canvas.getBoundingClientRect();
-        const pixelData = context.getImageData(event.clientX - rect.left, event.clientY - rect.top, 1, 1).data;
-        setColor('#' + ('000000' + rgbToHex(pixelData[0], pixelData[1], pixelData[2])).slice(-6));
+  const handleCanvasMove = useCallback<NonNullable<PixelatorCanvasProps['onMouseMove']>>(
+    event => {
+      const canvas = canvasRef.current?.canvas;
+      if (canvas) {
+        const context = canvasRef.current?.canvas?.getContext('2d', { willReadFrequently: true });
+        if (context) {
+          const rect = canvas.getBoundingClientRect();
+          const gridX = event.clientX - rect.left;
+          const gridY = event.clientY - rect.top;
+          const pixelData = context.getImageData(gridX, gridY, 1, 1).data;
+
+          setColor('#' + ('000000' + rgbToHex(pixelData[0], pixelData[1], pixelData[2])).slice(-6));
+          setCoords(currentCoords => {
+            const coords = pixelationFactor
+              ? { x: Math.floor(gridX / pixelationFactor), y: Math.floor(gridY / pixelationFactor) }
+              : undefined;
+            return coords?.x === currentCoords?.x && coords?.y === currentCoords?.y ? currentCoords : coords;
+          });
+        }
       }
-    }
+    },
+    [pixelationFactor],
+  );
+
+  const handleCanvasExit = useCallback<NonNullable<PixelatorCanvasProps['onMouseOut']>>(() => {
+    setCoords(undefined);
+    setColor(undefined);
   }, []);
 
   const handleFiles = useMemo(
@@ -150,9 +182,10 @@ export function Home(): JSX.Element {
                   </Typography>
 
                   <Flex alignItems="center" direction="row">
-                    {color && <ColorPreview color={color} />}
-
                     <Rhythm ml={3}>
+                      {coords && <Coords x={coords.x} y={coords.y} />}
+                      {color && <ColorPreview color={color} />}
+
                       <InlineTextTooltip
                         hoverable
                         withoutTogglerFocusStyle
@@ -179,16 +212,12 @@ export function Home(): JSX.Element {
 
               <PixelatorCanvas
                 height={previewHeight}
+                lined={lined}
                 onClick={handleCanvasClick}
                 onMouseMove={handleCanvasMove}
-                pixelationFactor={
-                  pixelate && valid && gridSize
-                    ? Math.min(
-                        Math.floor(previewWidth / (gridSize.x * PIXELS_PER_GRID)),
-                        Math.floor(previewHeight / (gridSize.y * PIXELS_PER_GRID)),
-                      )
-                    : undefined
-                }
+                onMouseOut={handleCanvasExit}
+                pixelate={pixelate}
+                pixelationFactor={pixelationFactor}
                 ref={canvasRef}
                 source={source}
                 width={previewWidth}
@@ -243,21 +272,24 @@ export function Home(): JSX.Element {
                       </InlineTextTooltip>
                     </Header>
                     <Rhythm mt={5}>
-                      <SizePicker
-                        full
-                        disabled={!pixelate}
-                        onChange={handleGridSizeChange}
-                        value={pixelate ? gridSize : undefined}
-                      />
+                      <SizePicker full onChange={handleGridSizeChange} value={gridSize} />
                     </Rhythm>
 
                     <Rhythm my={4}>
                       <Divider orientation="horizontal" variant="primary" />
                     </Rhythm>
 
-                    <Toggle checked={!pixelate} onChange={togglePixelate}>
-                      {`Don't pixelate the image`}
-                    </Toggle>
+                    <Flex wrap direction="row" justifyContent="space-between">
+                      <Rhythm my={2}>
+                        <Toggle checked={lined} onChange={toggleLined}>
+                          {`Show grid lines`}
+                        </Toggle>
+
+                        <Toggle checked={!pixelate} onChange={togglePixelate}>
+                          {`Don't pixelate the image`}
+                        </Toggle>
+                      </Rhythm>
+                    </Flex>
                   </InputContainer>
                 </Rhythm>
               </Rhythm>

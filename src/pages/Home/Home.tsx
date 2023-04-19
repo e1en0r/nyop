@@ -32,9 +32,12 @@ import { HighlightSquare } from 'components/HighlightSquare';
 import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
 import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'components/PixelatorCanvas';
+import { ShowCodeButton } from 'components/ShowCodeButton/ShowCodeButton';
 import { SizePicker, SizePickerProps, SizePickerValue } from 'components/SizePicker';
 import { getFormWidth, getPixelationFactor, getPreviewWidth } from 'utils/size';
+import { Pixel } from 'utils/types';
 import { createImageUploader } from 'utils/upload';
+import { CodeIcon } from 'icons/CodeIcon';
 import { HelpIcon } from 'icons/HelpIcon';
 import { InfoIcon } from 'icons/InfoIcon';
 
@@ -45,6 +48,7 @@ export function Home(): JSX.Element {
   const [lined, setLined] = useState(true);
   const [loading, setLoading] = useState(false);
   const [pixelate, setPixelate] = useState(true);
+  const [pixels, setPixels] = useState<Pixel[]>();
   const [showCanvas, setShowCanvas] = useState(false);
   const [source, setSource] = useState<string | undefined>();
   const [valid, setValid] = useState<boolean>();
@@ -81,6 +85,7 @@ export function Home(): JSX.Element {
 
   const reset = useCallback(() => {
     resetMouseData();
+    setPixels(undefined);
     setShowCanvas(false);
     setSource(undefined);
     setValid(false);
@@ -160,25 +165,35 @@ export function Home(): JSX.Element {
                       {coords && <Coords x={coords.x} y={coords.y} />}
                       {color && <ColorPreview color={`#${color}`} />}
 
-                      <InlineTextTooltip
-                        hoverable
-                        withoutTogglerFocusStyle
-                        closeDelay={500}
-                        layout="vertical"
-                        position="left-top"
-                        toggler={
-                          <Rhythm mx={1}>
+                      <Flex alignItems="center" direction="row">
+                        <Rhythm ml={3}>
+                          <ShowCodeButton code={pixels}>
                             <IconButton color="neutral">
-                              <InfoIcon scale="large" />
+                              <CodeIcon scale="xlarge" />
                             </IconButton>
-                          </Rhythm>
-                        }
-                        triangleBorderWidth={2}
-                      >
-                        <Typography size="xlarge">
-                          Clicking anywhere in the canvas will copy its color to your clipboard
-                        </Typography>
-                      </InlineTextTooltip>
+                          </ShowCodeButton>
+
+                          <InlineTextTooltip
+                            hoverable
+                            withoutTogglerFocusStyle
+                            closeDelay={500}
+                            layout="vertical"
+                            position="left-top"
+                            toggler={
+                              <Rhythm mx={1}>
+                                <IconButton color="neutral">
+                                  <InfoIcon scale="large" />
+                                </IconButton>
+                              </Rhythm>
+                            }
+                            triangleBorderWidth={2}
+                          >
+                            <Typography size="xlarge">
+                              Clicking anywhere in the canvas will copy its color to your clipboard
+                            </Typography>
+                          </InlineTextTooltip>
+                        </Rhythm>
+                      </Flex>
                     </Rhythm>
                   </Flex>
                 </Header>
@@ -194,6 +209,7 @@ export function Home(): JSX.Element {
                   pixelate={pixelate}
                   pixelationFactor={pixelationFactor}
                   ref={canvasRef}
+                  setPixels={setPixels}
                   source={source}
                   width={previewWidth}
                 />

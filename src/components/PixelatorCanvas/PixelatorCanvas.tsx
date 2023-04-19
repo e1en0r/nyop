@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { ThemeProps, useThemeId } from '@phork/phorkit';
+import { Pixel } from 'utils/types';
 import styles from './PixelatorCanvas.module.css';
 import { PixelatorCanvasHandles } from './types';
 
@@ -14,6 +15,7 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
     pixelate?: boolean;
     /** If the pixelation factor is undefined then the image won't be pixelated */
     pixelationFactor: number | undefined;
+    setPixels?: (p: Pixel[]) => void;
     source: string;
     width: number;
   };
@@ -28,6 +30,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     onRenderStart,
     pixelate,
     pixelationFactor,
+    setPixels,
     source,
     style,
     themeId: initThemeId,
@@ -67,10 +70,20 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   const renderPixelation = useCallback(
     (context: CanvasRenderingContext2D) => {
       if (context && pixelationFactor) {
+        const pixels = [];
         for (let y = 0; y < height; y += pixelationFactor) {
           for (let x = 0; x < width; x += pixelationFactor) {
             const originalImageData = context.getImageData(0, 0, width, height).data;
             const pixelIndexPosition = (x + y * width) * 4;
+
+            pixels.push({
+              location: { x: x / pixelationFactor, y: y / pixelationFactor },
+              color: {
+                red: originalImageData[pixelIndexPosition],
+                green: originalImageData[pixelIndexPosition + 1],
+                blue: originalImageData[pixelIndexPosition + 2],
+              },
+            });
 
             context.fillStyle = `rgba(
               ${originalImageData[pixelIndexPosition]},
@@ -82,9 +95,11 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
             context.fillRect(x, y, pixelationFactor, pixelationFactor);
           }
         }
+
+        setPixels?.(pixels);
       }
     },
-    [height, pixelationFactor, width],
+    [height, pixelationFactor, setPixels, width],
   );
 
   const renderLines = useCallback(

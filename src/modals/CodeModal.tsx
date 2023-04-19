@@ -111,9 +111,19 @@ export const CodeModal = ({ id: initId, code: initCode, ...props }: CodeModalPro
             <code>{raw}</code>
           </Typography>
         ) : (
-          <Typography size="2xlarge" variants={['line-height-comfy']}>
-            {`Enter your NYOP number above and this will generate some code for you to paste into the JavasScript console
-            on the NYOP canvas. After you've run the code, reload the canvas and you should see your drawing in your square.`}
+          <Typography<'div'> as="div" size="2xlarge" variants={['line-height-comfy']}>
+            {`Enter your NYOP number above and this will generate some code for you to paste into the JavaScript console
+              on the NYOP canvas that will copy this drawing to your square(s) over there.`}
+            <Rhythm my={3}>
+              <Typography<'div'> as="div" weight="bold">
+                Please read the following information carefully.
+              </Typography>
+            </Rhythm>
+            <Rhythm mt={3}>
+              <div>{`After you've run the code there you won't see your changes until you reload the canvas.`}</div>
+              <div>{`You can only save 4 NYOP squares at a time. If you have a larger image you'll have to delete some of those squares from your pixel bag.
+              Keep pasting, reloading and deleting squares until you've applied them all.`}</div>
+            </Rhythm>
           </Typography>
         )}
       </ModalBody>

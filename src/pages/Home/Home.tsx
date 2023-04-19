@@ -18,11 +18,12 @@ import {
   Toggle,
   ToggleProps,
   Typography,
+  useGetHeight,
   useGetWidth,
   useSafeTimeout,
 } from '@phork/phorkit';
 import positionStyles from '@phork/phorkit/styles/modules/common/Position.module.css';
-import { PAGE_MIN_WIDTH } from 'config/sizes';
+import { PIXELS_PER_GRID } from 'config/sizes';
 import { APP_NAME } from 'config/strings';
 import { ColorPreview } from 'components/ColorPreview';
 import { Coords } from 'components/Coords';
@@ -32,14 +33,10 @@ import { InputContainer } from 'components/InputContainer';
 import { PagePaper } from 'components/PagePaper';
 import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'components/PixelatorCanvas';
 import { SizePicker, SizePickerProps, SizePickerValue } from 'components/SizePicker';
-import { getPaperSideOffset } from 'utils/size';
+import { getFormWidth, getPixelationFactor, getPreviewWidth } from 'utils/size';
 import { createImageUploader } from 'utils/upload';
 import { HelpIcon } from 'icons/HelpIcon';
 import { InfoIcon } from 'icons/InfoIcon';
-
-const FORM_MAX_WIDTH = 500;
-const PREVIEW_MAX_WIDTH = 1200;
-const PIXELS_PER_GRID = 25;
 
 export function Home(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
@@ -52,21 +49,23 @@ export function Home(): JSX.Element {
   const [source, setSource] = useState<string | undefined>();
   const [valid, setValid] = useState<boolean>();
 
+  const viewportHeight = useGetHeight() || 0;
   const viewportWidth = useGetWidth() || 0;
-  const sideOffsetWidth = getPaperSideOffset(viewportWidth) * 2;
-  const formWidth = Math.max(PAGE_MIN_WIDTH, Math.min(FORM_MAX_WIDTH, viewportWidth - sideOffsetWidth || 0));
+
+  const formWidth = getFormWidth(viewportWidth);
   const formHeight = formWidth; // for now only square images are supported
 
-  const previewWidth = Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, viewportWidth - sideOffsetWidth || 0));
-  const previewHeight = previewWidth; // for now only square images are supported
+  // this is the ideal size but because the pixelization factor gets rounded it's not the actual size used
+  const tempPreviewWidth = getPreviewWidth(viewportWidth, viewportHeight);
+  const tempPreviewHeight = tempPreviewWidth; // for now only square images are supported
 
-  const pixelationFactor =
-    valid && gridSize
-      ? Math.min(
-          Math.floor(previewWidth / (gridSize.x * PIXELS_PER_GRID)),
-          Math.floor(previewHeight / (gridSize.y * PIXELS_PER_GRID)),
-        )
-      : undefined;
+  const pixelationFactor = valid
+    ? Math.floor(getPixelationFactor(tempPreviewWidth, tempPreviewHeight, gridSize))
+    : undefined;
+
+  // use the rounded pixelation factor to get the actual preview size
+  const previewWidth = pixelationFactor !== undefined ? pixelationFactor * gridSize.x * PIXELS_PER_GRID : undefined;
+  const previewHeight = pixelationFactor !== undefined ? pixelationFactor * gridSize.y * PIXELS_PER_GRID : undefined;
 
   const {
     color,
@@ -139,7 +138,7 @@ export function Home(): JSX.Element {
 
       <Fragment>
         <PagePaper centered flexible role="main">
-          {showCanvas && source ? (
+          {showCanvas && source && previewWidth && previewHeight ? (
             <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: previewWidth }}>
               <Rhythm mb={4}>
                 <Header>

@@ -67,6 +67,25 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     [width, height, source],
   );
 
+  const getOpaquePixelRgb = useCallback((originalImageData: Uint8ClampedArray, pixelIndexPosition: number) => {
+    const rgba = {
+      red: originalImageData[pixelIndexPosition],
+      green: originalImageData[pixelIndexPosition + 1],
+      blue: originalImageData[pixelIndexPosition + 2],
+      alpha: originalImageData[pixelIndexPosition + 3],
+    };
+
+    if (rgba.alpha !== 255) {
+      const alpha = rgba.alpha / 255;
+      rgba.red = rgba.red * alpha + 255 * (1 - alpha);
+      rgba.green = rgba.green * alpha + 255 * (1 - alpha);
+      rgba.blue = rgba.blue * alpha + 255 * (1 - alpha);
+      rgba.alpha = 255;
+    }
+
+    return rgba;
+  }, []);
+
   const renderPixelation = useCallback(
     (context: CanvasRenderingContext2D) => {
       if (context && pixelationFactor) {
@@ -75,22 +94,22 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
 
         for (let y = 0; y < height; y += pixelationFactor) {
           for (let x = 0; x < width; x += pixelationFactor) {
-            const pixelIndexPosition = (x + y * width) * 4;
+            const { red, green, blue, alpha } = getOpaquePixelRgb(originalImageData, (x + y * width) * 4);
 
             pixels.push({
               location: { x: x / pixelationFactor, y: y / pixelationFactor },
               color: {
-                red: originalImageData[pixelIndexPosition],
-                green: originalImageData[pixelIndexPosition + 1],
-                blue: originalImageData[pixelIndexPosition + 2],
+                red,
+                green,
+                blue,
               },
             });
 
             context.fillStyle = `rgba(
-              ${originalImageData[pixelIndexPosition]},
-              ${originalImageData[pixelIndexPosition + 1]},
-              ${originalImageData[pixelIndexPosition + 2]},
-              ${originalImageData[pixelIndexPosition + 3]}
+              ${red},
+              ${green},
+              ${blue},
+              ${alpha}
             )`;
 
             context.fillRect(x, y, pixelationFactor, pixelationFactor);
@@ -100,7 +119,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         setPixels?.(pixels);
       }
     },
-    [height, pixelationFactor, setPixels, width],
+    [getOpaquePixelRgb, height, pixelationFactor, setPixels, width],
   );
 
   const renderLines = useCallback(

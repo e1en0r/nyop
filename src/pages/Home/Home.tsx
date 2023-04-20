@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
   ArrowLeftIcon,
@@ -12,6 +12,8 @@ import {
   IconToast,
   InlineTextTooltip,
   Rhythm,
+  Slider,
+  SliderProps,
   SpinnerIcon,
   TimesIcon,
   ToastContext,
@@ -41,9 +43,12 @@ import { CodeIcon } from 'icons/CodeIcon';
 import { HelpIcon } from 'icons/HelpIcon';
 import { InfoIcon } from 'icons/InfoIcon';
 
+const DEFAULT_BLUR = 5;
+
 export function Home(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
   const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
+  const [blur, setBlur] = useState<number>(DEFAULT_BLUR);
   const [gridSize, setGridSize] = useState<SizePickerValue>({ x: 1, y: 1 });
   const [lined, setLined] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -85,6 +90,7 @@ export function Home(): JSX.Element {
 
   const reset = useCallback(() => {
     resetMouseData();
+    setBlur(DEFAULT_BLUR);
     setPixels(undefined);
     setShowCanvas(false);
     setSource(undefined);
@@ -127,6 +133,10 @@ export function Home(): JSX.Element {
 
   const handleOnValidateImageChange = useCallback<FileUploadPreviewProps['onValidate']>(value => {
     setValid(value);
+  }, []);
+
+  const handleBlurChange = useCallback<NonNullable<SliderProps['onChange']>>((_event, value) => {
+    setBlur(value);
   }, []);
 
   // [TODO]: find non-blocking way to render canvas; until then use a timeout to show the spinner
@@ -201,6 +211,7 @@ export function Home(): JSX.Element {
 
               <div className={positionStyles['position-relative']}>
                 <PixelatorCanvas
+                  blur={blur}
                   height={previewHeight}
                   lined={lined}
                   onClick={handleCanvasClick}
@@ -285,6 +296,29 @@ export function Home(): JSX.Element {
                         </Toggle>
                       </Rhythm>
                     </Flex>
+
+                    {pixelate && (
+                      <>
+                        <Rhythm my={4}>
+                          <Divider orientation="horizontal" variant="primary" />
+                        </Rhythm>
+
+                        <Rhythm my={5}>
+                          <Slider
+                            aria-label="Blur"
+                            disabled={!pixelate}
+                            max={20}
+                            min={0}
+                            onChange={handleBlurChange}
+                            step={1}
+                            value={pixelate ? blur : 0}
+                            width="100%"
+                          >
+                            Blur
+                          </Slider>
+                        </Rhythm>
+                      </>
+                    )}
                   </InputContainer>
                 </Rhythm>
               </Rhythm>

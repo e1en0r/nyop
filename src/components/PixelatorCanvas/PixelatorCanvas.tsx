@@ -1,12 +1,15 @@
 import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { ThemeProps, useThemeId } from '@phork/phorkit';
+import { getAveragePixelRgb, getOpaquePixelRgb } from 'utils/color';
 import { Pixel } from 'utils/types';
 import styles from './PixelatorCanvas.module.css';
 import { PixelatorCanvasHandles } from './types';
 
 export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
   ThemeProps & {
+    /** This will get the average of the pixel and its neighbors */
+    blur?: number;
     height: number;
     lined?: boolean;
     loaderSize?: number;
@@ -22,6 +25,7 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
 
 export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   {
+    blur = 0,
     className,
     height,
     lined,
@@ -29,7 +33,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     onRenderEnd,
     onRenderStart,
     pixelate,
-    pixelationFactor,
+    pixelationFactor = 0,
     setPixels,
     source,
     style,
@@ -67,24 +71,33 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     [width, height, source],
   );
 
-  const getOpaquePixelRgb = useCallback((originalImageData: Uint8ClampedArray, pixelIndexPosition: number) => {
-    const rgba = {
-      red: originalImageData[pixelIndexPosition],
-      green: originalImageData[pixelIndexPosition + 1],
-      blue: originalImageData[pixelIndexPosition + 2],
-      alpha: originalImageData[pixelIndexPosition + 3],
-    };
+  // https://stackoverflow.com/a/45969661
+  const getAverageOpaquePixelRgb = useCallback(
+    (originalImageData: Uint8ClampedArray, x: number, y: number, blur: number) => {
+      const neighborRange = Math.round(pixelationFactor * (blur / 100));
 
-    if (rgba.alpha !== 255) {
-      const alpha = rgba.alpha / 255;
-      rgba.red = rgba.red * alpha + 255 * (1 - alpha);
-      rgba.green = rgba.green * alpha + 255 * (1 - alpha);
-      rgba.blue = rgba.blue * alpha + 255 * (1 - alpha);
-      rgba.alpha = 255;
-    }
+      const pixels = [];
+      if (neighborRange) {
+        const numRows = height / pixelationFactor;
+        const numColumns = width / pixelationFactor;
+        const startX = Math.max(0, x - 4 * neighborRange);
+        const stopX = Math.min((numColumns - 1) * pixelationFactor, x + 4 * neighborRange); // this needs clamping
+        const startY = Math.max(0, y - 4 * neighborRange);
+        const stopY = Math.min((numRows - 1) * pixelationFactor, y + 4 * neighborRange); // also clamp
 
-    return rgba;
-  }, []);
+        for (let pixelX = startX; pixelX < stopX; pixelX += 1) {
+          for (let pixelY = startY; pixelY < stopY; pixelY += 1) {
+            pixels.push(getOpaquePixelRgb(originalImageData, (pixelX + pixelY * width) * 4));
+          }
+        }
+      } else {
+        pixels.push(getOpaquePixelRgb(originalImageData, (x + y * width) * 4));
+      }
+
+      return getAveragePixelRgb(pixels);
+    },
+    [height, pixelationFactor, width],
+  );
 
   const renderPixelation = useCallback(
     (context: CanvasRenderingContext2D) => {
@@ -94,7 +107,9 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
 
         for (let y = 0; y < height; y += pixelationFactor) {
           for (let x = 0; x < width; x += pixelationFactor) {
-            const { red, green, blue, alpha } = getOpaquePixelRgb(originalImageData, (x + y * width) * 4);
+            const { red, green, blue, alpha } = blur
+              ? getAverageOpaquePixelRgb(originalImageData, x, y, blur)
+              : getOpaquePixelRgb(originalImageData, (x + y * width) * 4);
 
             pixels.push({
               location: { x: x / pixelationFactor, y: y / pixelationFactor },
@@ -119,7 +134,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         setPixels?.(pixels);
       }
     },
-    [getOpaquePixelRgb, height, pixelationFactor, setPixels, width],
+    [blur, getAverageOpaquePixelRgb, height, pixelationFactor, setPixels, width],
   );
 
   const renderLines = useCallback(

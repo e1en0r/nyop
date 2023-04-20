@@ -70,10 +70,11 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   const renderPixelation = useCallback(
     (context: CanvasRenderingContext2D) => {
       if (context && pixelationFactor) {
+        const originalImageData = context.getImageData(0, 0, width, height).data;
         const pixels = [];
+
         for (let y = 0; y < height; y += pixelationFactor) {
           for (let x = 0; x < width; x += pixelationFactor) {
-            const originalImageData = context.getImageData(0, 0, width, height).data;
             const pixelIndexPosition = (x + y * width) * 4;
 
             pixels.push({

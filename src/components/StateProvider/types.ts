@@ -5,6 +5,5 @@ export type StateValue = {
   gridSize: { x: number; y: number };
   loading?: boolean;
   pixelate?: boolean;
-  pixelationFactor?: number;
   valid?: boolean;
 };

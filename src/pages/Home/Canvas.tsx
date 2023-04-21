@@ -14,7 +14,6 @@ import {
   useGetWidth,
 } from '@phork/phorkit';
 import positionStyles from '@phork/phorkit/styles/modules/common/Position.module.css';
-import { PIXELS_PER_GRID } from 'config/sizes';
 import { ColorPreview } from 'components/ColorPreview';
 import { Coords } from 'components/Coords';
 import { HighlightSquare } from 'components/HighlightSquare';
@@ -33,7 +32,7 @@ export function Canvas(): JSX.Element {
   const [source] = useGetSource();
 
   const { state, setShowCanvas, setBlur, setLoading } = useStateContext();
-  const { showGridLines, blur, gridSize, pixelate, valid } = state;
+  const { showGridLines, blur, gridSize, pixelate } = state;
 
   const viewportHeight = useGetHeight() || 0;
   const viewportWidth = useGetWidth() || 0;
@@ -42,13 +41,11 @@ export function Canvas(): JSX.Element {
   const tempPreviewWidth = getPreviewWidth(viewportWidth, viewportHeight);
   const tempPreviewHeight = tempPreviewWidth; // for now only square images are supported
 
-  const pixelationFactor = valid
-    ? Math.floor(getPixelationFactor(tempPreviewWidth, tempPreviewHeight, gridSize))
-    : undefined;
-
-  // use the rounded pixelation factor to get the actual preview size
-  const previewWidth = pixelationFactor !== undefined ? pixelationFactor * gridSize.x * PIXELS_PER_GRID : undefined;
-  const previewHeight = pixelationFactor !== undefined ? pixelationFactor * gridSize.y * PIXELS_PER_GRID : undefined;
+  const {
+    pixelationFactor,
+    factoredWidth: previewWidth,
+    factoredHeight: previewHeight,
+  } = getPixelationFactor(tempPreviewWidth, tempPreviewHeight, gridSize) || {};
 
   const {
     color,
@@ -134,13 +131,13 @@ export function Canvas(): JSX.Element {
           <div className={positionStyles['position-relative']}>
             <PixelatorCanvas
               blur={blur}
+              gridSize={gridSize}
               height={previewHeight}
               lined={showGridLines}
               onClick={handleCanvasClick}
               onMouseMove={handleCanvasMove}
               onMouseOut={handleCanvasExit}
               pixelate={pixelate}
-              pixelationFactor={pixelationFactor}
               ref={canvasRef}
               setPixels={setPixels}
               source={source.src}
@@ -156,10 +153,10 @@ export function Canvas(): JSX.Element {
               <Slider
                 aria-label="Blur"
                 disabled={!pixelate}
-                max={20}
+                max={30}
                 min={0}
                 onChange={handleBlurChange}
-                step={1}
+                step={5}
                 value={pixelate ? blur : 0}
                 width="100%"
               >

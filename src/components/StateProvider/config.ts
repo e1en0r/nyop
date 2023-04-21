@@ -5,7 +5,6 @@ export const DEFAULT_STATE = {
   gridSize: { x: 1, y: 1 },
   loading: false,
   pixelate: true,
-  pixelationFactor: undefined,
   showCanvas: false,
   showGridLines: false,
   valid: false,

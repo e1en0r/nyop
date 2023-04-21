@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'reac
 import { ThemeProps, useThemeId } from '@phork/phorkit';
 import { getAveragePixelRgb, getOpaquePixelRgb } from 'utils/color';
 import { Pixel } from 'utils/types';
+import { getPixelationFactor } from '../../utils/size';
 import styles from './PixelatorCanvas.module.css';
 import { PixelatorCanvasHandles } from './types';
 
@@ -10,14 +11,13 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
   ThemeProps & {
     /** This will get the average of the pixel and its neighbors */
     blur?: number;
+    /** This is in multiples of PIXELS_PER_GRID, not just pixels */
+    gridSize: { x: number; y: number };
     height: number;
     lined?: boolean;
-    loaderSize?: number;
     onRenderEnd?: () => void;
     onRenderStart?: () => void;
     pixelate?: boolean;
-    /** If the pixelation factor is undefined then the image won't be pixelated */
-    pixelationFactor: number | undefined;
     setPixels?: (p: Pixel[]) => void;
     source: string;
     width: number;
@@ -27,13 +27,12 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   {
     blur = 0,
     className,
+    gridSize,
     height,
     lined,
-    loaderSize,
     onRenderEnd,
     onRenderStart,
     pixelate,
-    pixelationFactor = 0,
     setPixels,
     source,
     style,
@@ -59,21 +58,17 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     [],
   );
 
-  const renderCanvasImage = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      const image = new Image(width, height);
-      image.src = source;
-
-      if (image.naturalWidth && image.naturalHeight) {
-        context?.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, width, height);
-      }
-    },
-    [width, height, source],
-  );
-
   // https://stackoverflow.com/a/45969661
   const getAverageOpaquePixelRgb = useCallback(
-    (originalImageData: Uint8ClampedArray, x: number, y: number, blur: number) => {
+    (
+      originalImageData: Uint8ClampedArray,
+      pixelationFactor: number,
+      width: number,
+      height: number,
+      x: number,
+      y: number,
+      blur: number,
+    ) => {
       const neighborRange = Math.round(pixelationFactor * (blur / 100));
 
       const pixels = [];
@@ -81,9 +76,9 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         const numRows = height / pixelationFactor;
         const numColumns = width / pixelationFactor;
         const startX = Math.max(0, x - 4 * neighborRange);
-        const stopX = Math.min((numColumns - 1) * pixelationFactor, x + 4 * neighborRange); // this needs clamping
         const startY = Math.max(0, y - 4 * neighborRange);
-        const stopY = Math.min((numRows - 1) * pixelationFactor, y + 4 * neighborRange); // also clamp
+        const stopX = Math.min((numColumns - 1) * pixelationFactor, x + 4 * neighborRange);
+        const stopY = Math.min((numRows - 1) * pixelationFactor, y + 4 * neighborRange);
 
         for (let pixelX = startX; pixelX < stopX; pixelX += 1) {
           for (let pixelY = startY; pixelY < stopY; pixelY += 1) {
@@ -96,11 +91,11 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
 
       return getAveragePixelRgb(pixels);
     },
-    [height, pixelationFactor, width],
+    [],
   );
 
   const renderPixelation = useCallback(
-    (context: CanvasRenderingContext2D) => {
+    (context: CanvasRenderingContext2D, pixelationFactor: number, width: number, height: number) => {
       if (context && pixelationFactor) {
         const originalImageData = context.getImageData(0, 0, width, height).data;
         const pixels = [];
@@ -108,7 +103,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         for (let y = 0; y < height; y += pixelationFactor) {
           for (let x = 0; x < width; x += pixelationFactor) {
             const { red, green, blue, alpha } = blur
-              ? getAverageOpaquePixelRgb(originalImageData, x, y, blur)
+              ? getAverageOpaquePixelRgb(originalImageData, pixelationFactor, width, height, x, y, blur)
               : getOpaquePixelRgb(originalImageData, (x + y * width) * 4);
 
             pixels.push({
@@ -134,11 +129,11 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         setPixels?.(pixels);
       }
     },
-    [blur, getAverageOpaquePixelRgb, height, pixelationFactor, setPixels, width],
+    [blur, getAverageOpaquePixelRgb, setPixels],
   );
 
   const renderLines = useCallback(
-    (context: CanvasRenderingContext2D) => {
+    (context: CanvasRenderingContext2D, pixelationFactor: number, width: number, height: number) => {
       if (context && pixelationFactor) {
         context.strokeStyle = 'lightgrey';
         context.beginPath();
@@ -155,7 +150,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
         context.stroke();
       }
     },
-    [height, pixelationFactor, width],
+    [],
   );
 
   const render = useCallback(() => {
@@ -163,30 +158,70 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
       onRenderStart?.();
 
       const offScreenCanvas = document.createElement('canvas');
-      offScreenCanvas.width = canvasRef.current.width;
-      offScreenCanvas.height = canvasRef.current.height;
-
       const offScreenContext = getContext(offScreenCanvas);
-      if (offScreenContext) {
-        renderCanvasImage(offScreenContext);
-        pixelate && renderPixelation(offScreenContext);
-        lined && renderLines(offScreenContext);
+      const onScreenContext = getContext(canvasRef.current);
 
-        const onScreenContext = getContext(canvasRef.current);
-        if (onScreenContext) {
-          onScreenContext.drawImage(offScreenCanvas, 0, 0);
+      if (offScreenContext && onScreenContext) {
+        const image = new Image();
+        image.onload = () => {
+          const { pixelationFactor, factoredWidth, factoredHeight } =
+            getPixelationFactor(image.naturalWidth, image.naturalHeight, gridSize) || {};
+
+          offScreenCanvas.width = factoredWidth;
+          offScreenCanvas.height = factoredHeight;
+
+          // draw everything offscreen at the actual image size for the best quality when determining blur
+          offScreenContext?.drawImage(
+            image,
+            0,
+            0,
+            image.naturalWidth,
+            image.naturalHeight,
+            0,
+            0,
+            factoredWidth,
+            factoredHeight,
+          );
+          pixelate && renderPixelation(offScreenContext, pixelationFactor, factoredWidth, factoredHeight);
+          lined && renderLines(offScreenContext, pixelationFactor, factoredWidth, factoredHeight);
+
+          // render the on screen drawing at the requested size
+          onScreenContext.drawImage(
+            offScreenCanvas,
+            0,
+            0,
+            image.naturalWidth,
+            image.naturalHeight,
+            0,
+            0,
+            width,
+            height,
+          );
           onScreenContext.save();
-        }
+        };
+        image.src = source;
       }
 
       onRenderEnd?.();
     }
-  }, [onRenderStart, getContext, onRenderEnd, renderCanvasImage, pixelate, renderPixelation, lined, renderLines]);
+  }, [
+    onRenderStart,
+    getContext,
+    onRenderEnd,
+    source,
+    gridSize,
+    pixelate,
+    renderPixelation,
+    lined,
+    renderLines,
+    width,
+    height,
+  ]);
 
-  // render the image when the pixelation factor or the source changes
+  // render the image when the properties change
   useEffect(() => {
     render();
-  }, [render, pixelationFactor, pixelate, lined, source]);
+  }, [render, pixelate, lined, source]);
 
   return (
     <div

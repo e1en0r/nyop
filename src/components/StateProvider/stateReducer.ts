@@ -33,12 +33,6 @@ export function StateReducer(state: StateValue, action: StateAction): StateValue
         pixelate: action.pixelate,
       };
 
-    case ACTIONS.SET_PIXELATION_FACTOR:
-      return {
-        ...state,
-        pixelationFactor: action.pixelationFactor,
-      };
-
     case ACTIONS.SET_SHOW_CANVAS:
       return {
         ...state,

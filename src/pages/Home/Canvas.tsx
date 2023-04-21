@@ -2,10 +2,10 @@ import { Fragment, useCallback, useRef, useState } from 'react';
 import {
   ArrowLeftIcon,
   Flex,
-  Header,
   IconButton,
   IconTextButton,
   InlineTextTooltip,
+  Paper,
   Rhythm,
   Slider,
   SliderProps,
@@ -14,6 +14,7 @@ import {
   useGetWidth,
 } from '@phork/phorkit';
 import positionStyles from '@phork/phorkit/styles/modules/common/Position.module.css';
+import { viewports } from 'config/viewports';
 import { ColorPreview } from 'components/ColorPreview';
 import { Coords } from 'components/Coords';
 import { HighlightSquare } from 'components/HighlightSquare';
@@ -25,6 +26,8 @@ import { getPixelationFactor, getPreviewWidth } from 'utils/size';
 import { Pixel } from 'utils/types';
 import { CodeIcon } from 'icons/CodeIcon';
 import { InfoIcon } from 'icons/InfoIcon';
+
+const MOBILE_BREAKPOINT = viewports.xsmall.max;
 
 export function Canvas(): JSX.Element {
   const canvasRef = useRef<PixelatorCanvasHandles | undefined>();
@@ -73,8 +76,8 @@ export function Canvas(): JSX.Element {
   return (
     <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: previewWidth }}>
       <Rhythm mb={4}>
-        <Header>
-          <Typography<'div'> as="div" size="2xlarge">
+        <Flex full alignItems="center" justifyContent="space-between">
+          <Flex alignItems="center" direction="row" justifyContent="flex-start">
             <IconTextButton
               color="neutral"
               icon={<ArrowLeftIcon scale="medium" />}
@@ -83,47 +86,51 @@ export function Canvas(): JSX.Element {
               size="relative"
               weight="inline"
             >
-              Back
+              <Typography<'div'> as="div" size="2xlarge">
+                Back
+              </Typography>
             </IconTextButton>
-          </Typography>
+          </Flex>
 
-          <Flex alignItems="center" direction="row">
+          {viewportWidth >= MOBILE_BREAKPOINT && (
+            <Flex alignItems="center" direction="row" justifyContent="center">
+              <Rhythm ml={3}>
+                {coords && <Coords x={coords.x} y={coords.y} />}
+                {color && <ColorPreview color={`#${color}`} />}
+              </Rhythm>
+            </Flex>
+          )}
+
+          <Flex alignItems="center" direction="row" justifyContent="flex-end">
             <Rhythm ml={3}>
-              {coords && <Coords x={coords.x} y={coords.y} />}
-              {color && <ColorPreview color={`#${color}`} />}
+              <ShowCodeButton code={pixels}>
+                <IconButton color="neutral" title="Get code">
+                  <CodeIcon scale="xlarge" />
+                </IconButton>
+              </ShowCodeButton>
 
-              <Flex alignItems="center" direction="row">
-                <Rhythm ml={3}>
-                  <ShowCodeButton code={pixels}>
-                    <IconButton color="neutral" title="Get code">
-                      <CodeIcon scale="xlarge" />
+              <InlineTextTooltip
+                hoverable
+                withoutTogglerFocusStyle
+                closeDelay={500}
+                layout="vertical"
+                position="left-top"
+                toggler={
+                  <Rhythm mx={1}>
+                    <IconButton color="neutral">
+                      <InfoIcon scale="large" />
                     </IconButton>
-                  </ShowCodeButton>
-
-                  <InlineTextTooltip
-                    hoverable
-                    withoutTogglerFocusStyle
-                    closeDelay={500}
-                    layout="vertical"
-                    position="left-top"
-                    toggler={
-                      <Rhythm mx={1}>
-                        <IconButton color="neutral">
-                          <InfoIcon scale="large" />
-                        </IconButton>
-                      </Rhythm>
-                    }
-                    triangleBorderWidth={2}
-                  >
-                    <Typography size="xlarge">
-                      Clicking anywhere in the canvas will copy its color to your clipboard
-                    </Typography>
-                  </InlineTextTooltip>
-                </Rhythm>
-              </Flex>
+                  </Rhythm>
+                }
+                triangleBorderWidth={2}
+              >
+                <Typography size="xlarge">
+                  Clicking anywhere in the canvas will copy its color to your clipboard.
+                </Typography>
+              </InlineTextTooltip>
             </Rhythm>
           </Flex>
-        </Header>
+        </Flex>
       </Rhythm>
 
       {source && previewWidth && previewHeight && (
@@ -149,7 +156,7 @@ export function Canvas(): JSX.Element {
           </div>
 
           {pixelate && (
-            <Rhythm my={5}>
+            <Rhythm mb={4} mt={5}>
               <Slider
                 aria-label="Blur"
                 disabled={!pixelate}
@@ -162,6 +169,17 @@ export function Canvas(): JSX.Element {
               >
                 <Typography size="2xlarge">Blur</Typography>
               </Slider>
+            </Rhythm>
+          )}
+
+          {viewportWidth < MOBILE_BREAKPOINT && (
+            <Rhythm my={4} p={3}>
+              <Paper full color={color || coords ? 'secondary' : 'transparent'} style={{ height: 50 }}>
+                <Flex full alignItems="center" direction="row" justifyContent="space-around">
+                  {coords && <Coords x={coords.x} y={coords.y} />}
+                  {color && <ColorPreview color={`#${color}`} />}
+                </Flex>
+              </Paper>
             </Rhythm>
           )}
         </Fragment>

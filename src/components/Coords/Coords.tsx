@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flex, FlexProps, Typography } from '@phork/phorkit';
 import styles from './Coords.module.css';
 

@@ -25,7 +25,19 @@ export const getFormWidth = (width: number): number =>
 export const getPreviewWidth = (width: number, height: number): number =>
   Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, height * 0.8, width - getPaperSideOffset(width) * 2 || 0));
 
-export const getPixelationFactor = (width: number, height: number, gridSize?: { x: number; y: number }): number =>
-  gridSize
-    ? Math.min(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID)))
-    : 0;
+// this rounds down the pixelation and returns a width and height refactored with that in mind
+export const getPixelationFactor = (
+  width: number,
+  height: number,
+  gridSize: { x: number; y: number },
+): { pixelationFactor: number; factoredWidth: number; factoredHeight: number } => {
+  const pixelationFactor = Math.floor(
+    Math.min(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID))),
+  );
+
+  return {
+    pixelationFactor,
+    factoredWidth: pixelationFactor * gridSize.x * PIXELS_PER_GRID,
+    factoredHeight: pixelationFactor * gridSize.y * PIXELS_PER_GRID,
+  };
+};

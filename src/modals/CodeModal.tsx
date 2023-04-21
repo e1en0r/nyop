@@ -112,8 +112,8 @@ export const CodeModal = ({ id: initId, code: initCode, ...props }: CodeModalPro
           </Typography>
         ) : (
           <Typography<'div'> as="div" size="2xlarge" variants={['line-height-comfy']}>
-            {`Enter your NYOP number above and this will generate some code for you to paste into the JavaScript console
-              on the NYOP canvas that will copy this drawing to your square(s) over there.`}
+            {`Enter your NYOP number above and this will generate some code for you. If you paste the code into the JavaScript console
+              on the NYOP canvas it will copy this drawing to your square(s) over there.`}
             <Rhythm my={3}>
               <Typography<'div'> as="div" weight="bold">
                 Please read the following information carefully.

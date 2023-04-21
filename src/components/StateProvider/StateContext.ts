@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { createContext } from 'react';
 import { DEFAULT_STATE } from './config';
@@ -20,11 +18,11 @@ export type StateContextValue = {
 export const StateContext = createContext<StateContextValue>({
   state: DEFAULT_STATE,
   reset: () => undefined,
-  setBlur: blur_ => undefined,
-  setGridSize: gridSize_ => undefined,
-  setLoading: loading_ => undefined,
-  setPixelate: pixelate_ => undefined,
-  setShowCanvas: showCanvas_ => undefined,
-  setShowGridLines: showGridLines_ => undefined,
-  setValid: valid_ => undefined,
+  setBlur: (/* blur */) => undefined,
+  setGridSize: (/* gridSize */) => undefined,
+  setLoading: (/* loading */) => undefined,
+  setPixelate: (/* pixelate */) => undefined,
+  setShowCanvas: (/* showCanvas */) => undefined,
+  setShowGridLines: (/* showGridLines */) => undefined,
+  setValid: (/* valid */) => undefined,
 });

@@ -186,17 +186,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
           lined && renderLines(offScreenContext, pixelationFactor, factoredWidth, factoredHeight);
 
           // render the on screen drawing at the requested size
-          onScreenContext.drawImage(
-            offScreenCanvas,
-            0,
-            0,
-            image.naturalWidth,
-            image.naturalHeight,
-            0,
-            0,
-            width,
-            height,
-          );
+          onScreenContext.drawImage(offScreenCanvas, 0, 0, factoredWidth, factoredHeight, 0, 0, width, height);
           onScreenContext.save();
         };
         image.src = source;

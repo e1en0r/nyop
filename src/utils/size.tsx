@@ -32,7 +32,7 @@ export const getPixelationFactor = (
   gridSize: { x: number; y: number },
 ): { pixelationFactor: number; factoredWidth: number; factoredHeight: number } => {
   const pixelationFactor = Math.floor(
-    Math.min(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID))),
+    Math.max(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID))),
   );
 
   return {

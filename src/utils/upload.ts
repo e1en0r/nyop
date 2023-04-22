@@ -11,7 +11,7 @@ export const createImageUploader =
   (files: FileList): void => {
     const file = files[0];
 
-    if (['image/png', 'image/gif', 'image/jpeg'].includes(file.type)) {
+    if (['image/png', 'image/gif', 'image/jpeg', 'image/svg+xml'].includes(file.type)) {
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
@@ -27,7 +27,7 @@ export const createImageUploader =
       };
       reader.readAsDataURL(file);
     } else {
-      handleError('Upload error', 'Invalid file type. File types supported are PNG, GIF and JPG');
+      handleError('Upload error', 'Invalid file type. File types supported are PNG, GIF, JPG and SVG');
     }
 
     setFullSource?.(undefined);

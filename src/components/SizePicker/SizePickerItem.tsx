@@ -1,9 +1,10 @@
 import { cx } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useThemeId } from '@phork/phorkit';
 import styles from './SizePickerItem.module.css';
 
 export type SizePickerItemProps = React.HTMLAttributes<HTMLDivElement> & {
+  customizable?: boolean;
   filledX: number;
   filledY: number;
   renderedX: number;
@@ -12,6 +13,7 @@ export type SizePickerItemProps = React.HTMLAttributes<HTMLDivElement> & {
 
 export function SizePickerItem({
   className,
+  customizable,
   filledX,
   filledY,
   renderedX,
@@ -20,6 +22,7 @@ export function SizePickerItem({
 }: SizePickerItemProps): JSX.Element {
   const themeId = useThemeId();
   const totalGridItems = renderedX * renderedY;
+  const [filled, setFilled] = useState({ x: filledX, y: filledY });
 
   const items = Array(totalGridItems)
     .fill(null)
@@ -29,7 +32,7 @@ export function SizePickerItem({
       return {
         x: itemX,
         y: itemY,
-        filled: itemX < filledX && itemY < filledY,
+        filled: itemX < filled.x && itemY < filled.y,
       };
     });
 
@@ -42,10 +45,14 @@ export function SizePickerItem({
       }}
       {...props}
     >
-      {items.map(({ x, y, filled }) => (
+      {items.map(item => (
         <div
-          className={cx(styles.item, filled && styles['item--filled'], themeId && styles[`item--${themeId}`])}
-          key={`${x}x${y}`}
+          className={cx(styles.item, item.filled && styles['item--filled'], themeId && styles[`item--${themeId}`])}
+          key={`${item.x}x${item.y}`}
+          onClick={() => setFilled({ x: item.x + 1, y: item.y + 1 })}
+          onKeyDown={event => event.key === 'Enter' && setFilled({ x: item.x, y: item.y })}
+          role={customizable ? 'button' : undefined}
+          tabIndex={0}
         />
       ))}
     </div>

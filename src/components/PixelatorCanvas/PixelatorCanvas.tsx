@@ -2,8 +2,8 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { ThemeProps, useThemeId } from '@phork/phorkit';
 import { getAveragePixelRgb, getOpaquePixelRgb } from 'utils/color';
-import { Pixel } from 'utils/types';
-import { getPixelationFactor } from '../../utils/size';
+import { getPixelationFactor } from 'utils/size';
+import { Pixel, PixelationFactor } from 'utils/types';
 import styles from './PixelatorCanvas.module.css';
 import { PixelatorCanvasHandles } from './types';
 
@@ -15,6 +15,7 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
     gridSize: { x: number; y: number };
     height: number;
     lined?: boolean;
+    onError?: (error: string) => void;
     onRenderEnd?: () => void;
     onRenderStart?: () => void;
     pixelate?: boolean;
@@ -30,6 +31,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     gridSize,
     height,
     lined,
+    onError,
     onRenderEnd,
     onRenderStart,
     pixelate,
@@ -95,19 +97,37 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   );
 
   const renderPixelation = useCallback(
-    (context: CanvasRenderingContext2D, pixelationFactor: number, width: number, height: number) => {
-      if (context && pixelationFactor) {
-        const originalImageData = context.getImageData(0, 0, width, height).data;
+    (
+      destinationContext: CanvasRenderingContext2D,
+      destinationPixelation: PixelationFactor,
+      sourceContext: CanvasRenderingContext2D,
+      sourcePixelation: PixelationFactor,
+    ) => {
+      if (destinationContext && destinationPixelation) {
         const pixels = [];
+        const originalImageData = sourceContext.getImageData(
+          0,
+          0,
+          sourcePixelation.factoredWidth,
+          sourcePixelation.factoredHeight,
+        ).data;
 
-        for (let y = 0; y < height; y += pixelationFactor) {
-          for (let x = 0; x < width; x += pixelationFactor) {
+        for (let y = 0; y < sourcePixelation.factoredHeight; y += sourcePixelation.pixelationFactor) {
+          for (let x = 0; x < sourcePixelation.factoredWidth; x += sourcePixelation.pixelationFactor) {
             const { red, green, blue, alpha } = blur
-              ? getAverageOpaquePixelRgb(originalImageData, pixelationFactor, width, height, x, y, blur)
-              : getOpaquePixelRgb(originalImageData, (x + y * width) * 4);
+              ? getAverageOpaquePixelRgb(
+                  originalImageData,
+                  sourcePixelation.pixelationFactor,
+                  sourcePixelation.factoredWidth,
+                  sourcePixelation.factoredHeight,
+                  x,
+                  y,
+                  blur,
+                )
+              : getOpaquePixelRgb(originalImageData, (x + y * sourcePixelation.factoredWidth) * 4);
 
             pixels.push({
-              location: { x: x / pixelationFactor, y: y / pixelationFactor },
+              location: { x: x / sourcePixelation.pixelationFactor, y: y / sourcePixelation.pixelationFactor },
               color: {
                 red,
                 green,
@@ -115,14 +135,19 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
               },
             });
 
-            context.fillStyle = `rgba(
+            destinationContext.fillStyle = `rgba(
               ${red},
               ${green},
               ${blue},
               ${alpha}
             )`;
 
-            context.fillRect(x, y, pixelationFactor, pixelationFactor);
+            destinationContext.fillRect(
+              (x / sourcePixelation.pixelationFactor) * destinationPixelation.pixelationFactor,
+              (y / sourcePixelation.pixelationFactor) * destinationPixelation.pixelationFactor,
+              destinationPixelation.pixelationFactor,
+              destinationPixelation.pixelationFactor,
+            );
           }
         }
 
@@ -133,21 +158,21 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
   );
 
   const renderLines = useCallback(
-    (context: CanvasRenderingContext2D, pixelationFactor: number, width: number, height: number) => {
-      if (context && pixelationFactor) {
-        context.strokeStyle = 'lightgrey';
-        context.beginPath();
+    (destinationContext: CanvasRenderingContext2D, destinationPixelation: PixelationFactor) => {
+      if (destinationContext && destinationPixelation) {
+        destinationContext.strokeStyle = 'lightgrey';
+        destinationContext.beginPath();
 
-        for (let x = 0; x <= width; x += pixelationFactor) {
-          context.moveTo(x, 0);
-          context.lineTo(x, height);
+        for (let x = 0; x <= destinationPixelation.factoredWidth; x += destinationPixelation.pixelationFactor) {
+          destinationContext.moveTo(x, 0);
+          destinationContext.lineTo(x, destinationPixelation.factoredHeight);
         }
-        for (let y = 0; y <= height; y += pixelationFactor) {
-          context.moveTo(0, y);
-          context.lineTo(width, y);
+        for (let y = 0; y <= destinationPixelation.factoredHeight; y += destinationPixelation.pixelationFactor) {
+          destinationContext.moveTo(0, y);
+          destinationContext.lineTo(destinationPixelation.factoredWidth, y);
         }
 
-        context.stroke();
+        destinationContext.stroke();
       }
     },
     [],
@@ -157,55 +182,98 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     if (canvasRef.current) {
       onRenderStart?.();
 
-      const offScreenCanvas = document.createElement('canvas');
-      const offScreenContext = getContext(offScreenCanvas);
       const onScreenContext = getContext(canvasRef.current);
-
-      if (offScreenContext && onScreenContext) {
+      if (onScreenContext) {
         const image = new Image();
         image.onload = () => {
-          const { pixelationFactor, factoredWidth, factoredHeight } =
-            getPixelationFactor(image.naturalWidth, image.naturalHeight, gridSize) || {};
+          const destinationCanvas = document.createElement('canvas');
+          const destinationContext = getContext(destinationCanvas);
+          const destinationPixelation = getPixelationFactor(width, height, gridSize) || {};
+          destinationCanvas.width = destinationPixelation.factoredWidth;
+          destinationCanvas.height = destinationPixelation.factoredHeight;
 
-          offScreenCanvas.width = factoredWidth;
-          offScreenCanvas.height = factoredHeight;
+          if (destinationContext) {
+            // if an image should be pixelated then draw a separate source image for the best blur quality
+            if (pixelate) {
+              const sourceCanvas = document.createElement('canvas');
+              const sourceContext = getContext(sourceCanvas);
+              const sourcePixelation = getPixelationFactor(image.naturalWidth, image.naturalHeight, gridSize) || {};
+              sourceCanvas.width = sourcePixelation.factoredWidth;
+              sourceCanvas.height = sourcePixelation.factoredHeight;
 
-          // draw everything offscreen at the actual image size for the best quality when determining blur
-          offScreenContext?.drawImage(
-            image,
-            0,
-            0,
-            image.naturalWidth,
-            image.naturalHeight,
-            0,
-            0,
-            factoredWidth,
-            factoredHeight,
-          );
-          pixelate && renderPixelation(offScreenContext, pixelationFactor, factoredWidth, factoredHeight);
-          lined && renderLines(offScreenContext, pixelationFactor, factoredWidth, factoredHeight);
+              if (sourceContext) {
+                sourceContext.drawImage(
+                  image,
+                  0,
+                  0,
+                  image.naturalWidth,
+                  image.naturalHeight,
+                  0,
+                  0,
+                  sourcePixelation.factoredWidth,
+                  sourcePixelation.factoredHeight,
+                );
 
-          // render the on screen drawing at the requested size
-          onScreenContext.drawImage(offScreenCanvas, 0, 0, factoredWidth, factoredHeight, 0, 0, width, height);
-          onScreenContext.save();
+                // draw the final image off screen at the rendered size
+                renderPixelation(destinationContext, destinationPixelation, sourceContext, sourcePixelation);
+              } else {
+                return onError?.('Unable to get source context.');
+              }
+            } else {
+              destinationContext.drawImage(
+                image,
+                0,
+                0,
+                image.naturalWidth,
+                image.naturalHeight,
+                0,
+                0,
+                destinationPixelation.factoredWidth,
+                destinationPixelation.factoredHeight,
+              );
+            }
+
+            if (lined) {
+              renderLines(destinationContext, destinationPixelation);
+            }
+
+            // copy the off screen image to the on screen canvas
+            onScreenContext.drawImage(
+              destinationCanvas,
+              0,
+              0,
+              destinationPixelation.factoredWidth,
+              destinationPixelation.factoredHeight,
+              0,
+              0,
+              width,
+              height,
+            );
+            onScreenContext.save();
+
+            onRenderEnd?.();
+          } else {
+            return onError?.('Unable to get destination context.');
+          }
         };
         image.src = source;
+      } else {
+        return onError?.('Unable to get on screen context.');
       }
-
-      onRenderEnd?.();
     }
   }, [
-    onRenderStart,
     getContext,
-    onRenderEnd,
-    source,
     gridSize,
-    pixelate,
-    renderPixelation,
-    lined,
-    renderLines,
-    width,
     height,
+    lined,
+    onError,
+    onRenderEnd,
+    onRenderStart,
+    pixelate,
+    renderLines,
+    renderPixelation,
+    source,
+    width,
   ]);
 
   // render the image when the properties change

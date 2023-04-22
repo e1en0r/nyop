@@ -9,6 +9,7 @@ import {
   SMALL_PAPER_SIDE_OFFSET,
 } from 'config/sizes';
 import { viewports } from 'config/viewports';
+import { PixelationFactor } from 'utils/types';
 
 export const getImageSize = (width?: number): number =>
   Math.max(
@@ -30,7 +31,7 @@ export const getPixelationFactor = (
   width: number,
   height: number,
   gridSize: { x: number; y: number },
-): { pixelationFactor: number; factoredWidth: number; factoredHeight: number } => {
+): PixelationFactor => {
   const pixelationFactor = Math.floor(
     Math.max(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID))),
   );

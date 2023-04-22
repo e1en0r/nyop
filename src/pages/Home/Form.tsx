@@ -138,7 +138,7 @@ export function Form(): JSX.Element {
         <FileUploadPreview onValidate={setValid} source={source.src} width={formWidth} />
       ) : (
         <FileUpload
-          accept="image/x-png,image/gif,image/jpeg"
+          accept="image/x-png,image/gif,image/jpeg, image/svg+xml"
           handleFiles={handleFiles}
           height={formHeight}
           title="Drag and drop a square image here"

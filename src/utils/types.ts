@@ -9,3 +9,5 @@ export type Pixel = {
     blue: number;
   };
 };
+
+export type PixelationFactor = { pixelationFactor: number; factoredWidth: number; factoredHeight: number };

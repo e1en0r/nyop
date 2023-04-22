@@ -160,7 +160,7 @@ export function Canvas(): JSX.Element {
               <Slider
                 aria-label="Blur"
                 disabled={!pixelate}
-                max={30}
+                max={60}
                 min={0}
                 onChange={handleBlurChange}
                 step={5}

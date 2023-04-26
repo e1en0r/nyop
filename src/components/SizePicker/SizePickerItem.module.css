@@ -6,8 +6,16 @@
   display: grid;
   grid-column-gap: 1px;
   grid-row-gap: 1px;
+}
+
+.container--small {
   width: 70px;
   height: 70px;
+}
+
+.container--medium {
+  width: 140px;
+  height: 140px;
 }
 
 .item {
@@ -15,7 +23,26 @@
   grid-area: auto;
   opacity: 0.2;
 
+  &.item--hovered,
   &.item--filled {
     opacity: 1;
+  }
+
+  &.item--hovered {
+    background-color: var(--size-picker-color);
+    cursor: pointer;
+    opacity: 1;
+  }
+
+  &.item--light {
+    --size-picker-color: $light-color-accent;
+  }
+
+  &.item--dark {
+    --size-picker-color: $dark-color-accent;
+  }
+
+  &:focus {
+    outline: none;
   }
 }

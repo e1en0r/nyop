@@ -32,7 +32,7 @@ export function SizePicker({ disabled, onChange, value, ...props }: SizePickerPr
             style={{ padding: 0, margin: 0 }}
             weight="ghost"
           >
-            <SizePickerItem filledX={filled} filledY={filled} renderedX={GRID_SIZE} renderedY={GRID_SIZE} />
+            <SizePickerItem filled={{ x: filled, y: filled }} rendered={{ x: GRID_SIZE, y: GRID_SIZE }} size="small" />
           </Button>
         ))}
       </Rhythm>

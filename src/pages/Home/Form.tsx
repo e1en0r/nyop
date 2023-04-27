@@ -125,7 +125,7 @@ export function Form(): JSX.Element {
 
   return (
     <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: formWidth }}>
-      <Rhythm grouped mb={9} style={{ width: formWidth }}>
+      <Rhythm grouped mb={7} style={{ width: formWidth }}>
         <Rhythm px={8} py={10}>
           <InputContainer bordered full color="transparent">
             <Flex alignItems="center" direction="row" justifyContent="space-between">
@@ -175,7 +175,7 @@ export function Form(): JSX.Element {
         />
       )}
 
-      <Rhythm mt={9}>
+      <Rhythm mt={7}>
         <Footer>
           <Typography<'div'> as="div" size="4xlarge">
             <Button color="neutral" onClick={reset} shape="brick" size="relative" weight="inline">

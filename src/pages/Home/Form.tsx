@@ -39,6 +39,8 @@ export function Form(): JSX.Element {
   const previewWidth = getWidthFromGridSize(formWidth, gridSize);
   const previewHeight = getHeightFromGridSize(formWidth, gridSize);
 
+  const submitDisabled = !gridSize || !source;
+
   const reset = useCallback(() => {
     resetState();
     setPixels(undefined);
@@ -49,9 +51,9 @@ export function Form(): JSX.Element {
   const { createNotification, removeNotification } = useContext(ToastContext);
 
   const displayErrorToast = useCallback(
-    (title: string, content: string) => {
+    (title: string, content: string, level: 'warning' | 'danger' = 'danger') => {
       createNotification(
-        <IconToast contextId={ERROR_TOAST_ID} icon={TimesIcon} iconSize={20} level="danger" title={title}>
+        <IconToast contextId={ERROR_TOAST_ID} icon={TimesIcon} iconSize={20} level={level} title={title}>
           {content}
         </IconToast>,
       );
@@ -68,7 +70,8 @@ export function Form(): JSX.Element {
         } else {
           displayErrorToast(
             'Invalid image proportions',
-            `The proportions for the uploaded image don't match the proportions required by the chosen layout. The end result would be skewed.`,
+            `The proportions for the uploaded image don't match the proportions required by the chosen layout. The end result will be skewed.`,
+            'warning',
           );
         }
       } else {
@@ -181,8 +184,8 @@ export function Form(): JSX.Element {
           </Typography>
           <Typography<'div'> as="div" size="4xlarge">
             <Button
-              color="primary"
-              disabled={!valid}
+              color={valid || submitDisabled ? 'primary' : 'warning'}
+              disabled={submitDisabled}
               loader={<SpinnerIcon scale="xlarge" />}
               loading={loading}
               onClick={handleSubmit}

@@ -1,7 +1,5 @@
 .container {
   background-color: var(--file-upload-preview-background-color);
-  border-radius: 6px;
-  overflow: hidden;
   position: relative;
 }
 

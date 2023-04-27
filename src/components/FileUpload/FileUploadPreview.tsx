@@ -1,6 +1,4 @@
-import { cx } from '@emotion/css';
-import { FlexProps, ThemeProps, useThemeId } from '@phork/phorkit';
-import styles from './FileUploadPreview.module.css';
+import { FlexProps, ThemeProps } from '@phork/phorkit';
 
 export type FileUploadPreviewProps = Omit<FlexProps, 'onChange'> &
   ThemeProps & {
@@ -20,19 +18,11 @@ export function FileUploadPreview({
   onValidate,
   source,
   style,
-  themeId: initThemeId,
-  unthemed,
   width,
   ...props
 }: FileUploadPreviewProps): JSX.Element {
-  const themeId = useThemeId(initThemeId);
-
   return (
-    <div
-      className={cx(styles.container, themeId && styles[`container--${themeId}`], className)}
-      style={{ ...style, height: containerHeight || height, width: containerWidth || width }}
-      {...props}
-    >
+    <div style={{ ...style, height: containerHeight || height, width: containerWidth || width }} {...props}>
       <img alt="preview" height={height} src={source} width={width} />
     </div>
   );

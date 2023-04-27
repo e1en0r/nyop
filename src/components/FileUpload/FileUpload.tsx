@@ -1,12 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Button, Flex, Rhythm, Typography, useComponentId } from '@phork/phorkit';
+import { Button, Flex, Paper, Rhythm, Typography, useComponentId } from '@phork/phorkit';
 import utilityStyles from '@phork/phorkit/styles/modules/common/Utils.module.css';
-import { InputContainer } from 'components/InputContainer';
 import { UploadIcon } from 'icons/UploadIcon';
 import styles from './FileUpload.module.css';
 
 export type FileUploadProps = Omit<React.HTMLAttributes<HTMLFormElement>, 'onDragEnter'> &
   Pick<React.InputHTMLAttributes<HTMLInputElement>, 'accept'> & {
+    bordered?: boolean;
     height?: number;
     title?: string;
     handleFiles: (files: FileList) => void;
@@ -14,6 +14,7 @@ export type FileUploadProps = Omit<React.HTMLAttributes<HTMLFormElement>, 'onDra
 
 export function FileUpload({
   accept,
+  bordered,
   id,
   handleFiles,
   height,
@@ -78,9 +79,10 @@ export function FileUpload({
         type="file"
       />
       <label htmlFor={generateComponentId('input')} id={generateComponentId('label')}>
-        <InputContainer
+        <Paper
+          bordered={bordered}
           className={styles.container}
-          color={dragActive ? 'secondary' : 'transparent'}
+          color={dragActive ? 'accent' : undefined}
           style={{ height }}
         >
           <Flex full alignItems="center" direction="column" justifyContent="center">
@@ -88,17 +90,16 @@ export function FileUpload({
               <UploadIcon size={80} />
             </Rhythm>
             <Rhythm p={3}>
-              <Typography color="primary" size="5xlarge">
-                {title}
-              </Typography>
+              <Typography size="5xlarge">{title}</Typography>
             </Rhythm>
-            <Typography color="secondary" size="large">
+            <Typography size="large">
               or
               <Rhythm mx={1}>
                 <Button
                   align="center"
                   as="button"
                   color="neutral"
+                  contrast={dragActive}
                   onClick={handleButtonClick}
                   shape="brick"
                   size="medium"
@@ -121,7 +122,7 @@ export function FileUpload({
               onDrop={handleDrop}
             ></div>
           )}
-        </InputContainer>
+        </Paper>
       </label>
     </form>
   );

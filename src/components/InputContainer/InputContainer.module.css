@@ -1,7 +1,9 @@
 div.container {
-  border-radius: 4px;
-  border-style: dashed;
-  border-width: 2px;
-  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.container--full {
+  height: 100%;
   width: 100%;
 }

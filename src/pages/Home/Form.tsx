@@ -1,6 +1,7 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 import {
   Button,
+  Divider,
   Flex,
   Footer,
   IconToast,
@@ -125,55 +126,53 @@ export function Form(): JSX.Element {
 
   return (
     <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: formWidth }}>
-      <Rhythm grouped mb={7} style={{ width: formWidth }}>
-        <Rhythm px={8} py={10}>
-          <InputContainer bordered full color="transparent">
-            <Flex alignItems="center" direction="row" justifyContent="space-between">
-              <Flex direction="column">
-                <Typography color="primary" size="5xlarge">
-                  Choose your NYOP layout
+      <InputContainer bordered>
+        <Rhythm px={10} py={12}>
+          <Flex alignItems="center" direction="row" justifyContent="space-between">
+            <Flex direction="column">
+              <Typography size="5xlarge">Choose your NYOP layout</Typography>
+
+              <Rhythm mt={4}>
+                <Typography size="xlarge" variants={['line-height-comfy']} volume="quiet">
+                  Each NYOP square is {`${PIXELS_PER_GRID}x${PIXELS_PER_GRID}`}. If you have a block of squares you can
+                  draw a more detailed image.
                 </Typography>
-
-                <Rhythm mt={4}>
-                  <Typography size="xlarge" variants={['line-height-comfy']} volume="quiet">
-                    Each NYOP square is {`${PIXELS_PER_GRID}x${PIXELS_PER_GRID}`}. If you have a block of squares you
-                    can draw a more detailed image.
-                  </Typography>
-                </Rhythm>
-              </Flex>
-
-              <Rhythm ml={8}>
-                <Flex inflexible>
-                  <SizePickerItemCustom
-                    filled={gridSize}
-                    onChange={handleGridSizeChange}
-                    rendered={{ x: GRID_SIZE, y: GRID_SIZE }}
-                    size="medium"
-                  />
-                </Flex>
               </Rhythm>
             </Flex>
-          </InputContainer>
-        </Rhythm>
-      </Rhythm>
 
-      {source ? (
-        <FileUploadPreview
-          containerHeight={formWidth}
-          containerWidth={formWidth}
-          height={previewHeight}
-          onValidate={setValid}
-          source={source.src}
-          width={previewWidth}
-        />
-      ) : (
-        <FileUpload
-          accept="image/x-png,image/gif,image/jpeg, image/svg+xml"
-          handleFiles={handleFiles}
-          height={formWidth}
-          title="Drag and drop an image here"
-        />
-      )}
+            <Rhythm ml={8}>
+              <Flex inflexible>
+                <SizePickerItemCustom
+                  filled={gridSize}
+                  onChange={handleGridSizeChange}
+                  rendered={{ x: GRID_SIZE, y: GRID_SIZE }}
+                  size="medium"
+                />
+              </Flex>
+            </Rhythm>
+          </Flex>
+        </Rhythm>
+
+        <Divider color="primary" orientation="horizontal" />
+
+        {source ? (
+          <FileUploadPreview
+            containerHeight={formWidth}
+            containerWidth={formWidth}
+            height={previewHeight}
+            onValidate={setValid}
+            source={source.src}
+            width={previewWidth}
+          />
+        ) : (
+          <FileUpload
+            accept="image/x-png,image/gif,image/jpeg, image/svg+xml"
+            handleFiles={handleFiles}
+            height={formWidth}
+            title="Drag and drop an image here"
+          />
+        )}
+      </InputContainer>
 
       <Rhythm mt={7}>
         <Footer>

@@ -1,11 +1,11 @@
 import { Fragment, useCallback, useRef, useState } from 'react';
 import {
   ArrowLeftIcon,
+  Divider,
   Flex,
   IconButton,
   IconTextButton,
   InlineTextTooltip,
-  Paper,
   Rhythm,
   Slider,
   SliderProps,
@@ -18,6 +18,7 @@ import { viewports } from 'config/viewports';
 import { ColorPreview } from 'components/ColorPreview';
 import { Coords } from 'components/Coords';
 import { HighlightSquare } from 'components/HighlightSquare';
+import { InputContainer } from 'components/InputContainer';
 import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'components/PixelatorCanvas';
 import { ShowCodeButton } from 'components/ShowCodeButton/ShowCodeButton';
 import { useGetSource } from 'components/SourceProvider';
@@ -80,135 +81,145 @@ export function Canvas(): JSX.Element {
   }, [resetMouseData, setLoading, setShowCanvas]);
 
   return (
-    <Flex
-      alignItems="center"
-      direction="column"
-      justifyContent="center"
-      style={{ width: Math.max(previewWidth, previewHeight) }}
-    >
-      <Rhythm mb={4}>
-        <Flex full alignItems="center" justifyContent="space-between">
-          <Flex alignItems="center" direction="row" justifyContent="flex-start">
-            <IconTextButton
-              color="neutral"
-              icon={<ArrowLeftIcon scale="medium" />}
-              onClick={setHideCanvas}
-              shape="brick"
-              size="relative"
-              weight="inline"
-            >
-              <Typography<'div'> as="div" size="2xlarge">
-                Back
-              </Typography>
-            </IconTextButton>
-          </Flex>
-
-          {viewportWidth >= MOBILE_BREAKPOINT && (
-            <Flex alignItems="center" direction="row" justifyContent="center">
-              <Rhythm ml={3}>
-                {coords && <Coords x={coords.x} y={coords.y} />}
-                {color && <ColorPreview color={`#${color}`} />}
-              </Rhythm>
-            </Flex>
-          )}
-
-          <Flex alignItems="center" direction="row" justifyContent="flex-end">
-            <Rhythm ml={3}>
-              <ShowCodeButton code={pixels}>
-                <IconButton color="neutral" title="Get code">
-                  <CodeIcon scale="xlarge" />
-                </IconButton>
-              </ShowCodeButton>
-
-              <InlineTextTooltip
-                hoverable
-                withoutTogglerFocusStyle
-                closeDelay={500}
-                layout="vertical"
-                position="left-top"
-                toggler={
-                  <Rhythm mx={1}>
-                    <IconButton color="neutral">
-                      <InfoIcon scale="large" />
-                    </IconButton>
-                  </Rhythm>
-                }
-                triangleBorderWidth={2}
-              >
-                <Typography size="xlarge">
-                  Clicking anywhere in the canvas will copy its color to your clipboard.
-                  <br />
-                  <br />
-                  The <strong>&lt;/&gt;</strong> icon will start the process that allows you to copy the image to the
-                  NYOP canvas.
-                </Typography>
-              </InlineTextTooltip>
-            </Rhythm>
-          </Flex>
-        </Flex>
-      </Rhythm>
-
-      {source && previewWidth && previewHeight && (
-        <Fragment>
-          <div className={positionStyles['position-relative']}>
-            <PixelatorCanvas
-              blur={blur}
-              gridSize={gridSize}
-              height={previewHeight}
-              lined={showGridLines}
-              onClick={handleCanvasClick}
-              onMouseMove={handleCanvasMove}
-              onMouseOut={handleCanvasExit}
-              ref={canvasRef}
-              setPixels={setPixels}
-              source={source.src}
-              width={previewWidth}
-            />
-            {highlight && pixelationFactor && (
-              <HighlightSquare height={pixelationFactor} width={pixelationFactor} x={highlight.x} y={highlight.y} />
-            )}
-          </div>
-
-          <Rhythm mb={4} mt={5}>
-            <Flex full alignItems="center" direction="row" justifyContent="space-between">
-              <Rhythm mr={10}>
-                <Slider
-                  aria-label="Blur"
-                  max={60}
-                  min={0}
-                  onChange={handleBlurChange}
-                  step={5}
-                  value={blur}
-                  width="100%"
+    <Fragment>
+      <InputContainer bordered>
+        <Flex
+          alignItems="center"
+          direction="column"
+          justifyContent="center"
+          style={{ width: Math.max(previewWidth, previewHeight) }}
+        >
+          <Rhythm px={6} py={6}>
+            <Flex full alignItems="center" justifyContent="space-between">
+              <Flex alignItems="center" direction="row" justifyContent="flex-start">
+                <IconTextButton
+                  color="neutral"
+                  icon={<ArrowLeftIcon scale="medium" />}
+                  onClick={setHideCanvas}
+                  shape="brick"
+                  size="relative"
+                  weight="inline"
                 >
-                  <Typography size="2xlarge">Blur</Typography>
-                </Slider>
-              </Rhythm>
+                  <Typography<'div'> as="div" size="2xlarge">
+                    Back
+                  </Typography>
+                </IconTextButton>
+              </Flex>
 
-              <IconButton
-                color={showGridLines ? 'primary' : 'neutral'}
-                onClick={toggleGridLines}
-                shape="square"
-                title="Show grid lines"
-                weight="shaded"
-              >
-                <GridIcon scale="medium" />
-              </IconButton>
+              {viewportWidth >= MOBILE_BREAKPOINT && (
+                <Flex alignItems="center" direction="row" justifyContent="center">
+                  <Rhythm ml={3}>
+                    {coords && <Coords x={coords.x} y={coords.y} />}
+                    {color && <ColorPreview color={`#${color}`} />}
+                  </Rhythm>
+                </Flex>
+              )}
+
+              <Flex alignItems="center" direction="row" justifyContent="flex-end">
+                <Rhythm ml={3}>
+                  <ShowCodeButton code={pixels}>
+                    <IconButton color="neutral" title="Get code">
+                      <CodeIcon scale="xlarge" />
+                    </IconButton>
+                  </ShowCodeButton>
+
+                  <InlineTextTooltip
+                    hoverable
+                    withoutTogglerFocusStyle
+                    closeDelay={500}
+                    layout="vertical"
+                    position="left-top"
+                    toggler={
+                      <Rhythm mx={1}>
+                        <IconButton color="neutral">
+                          <InfoIcon scale="large" />
+                        </IconButton>
+                      </Rhythm>
+                    }
+                    triangleBorderWidth={2}
+                  >
+                    <Typography size="xlarge">
+                      Clicking anywhere in the canvas will copy its color to your clipboard.
+                      <br />
+                      <br />
+                      The <strong>&lt;/&gt;</strong> icon will start the process that allows you to copy the image to
+                      the NYOP canvas.
+                    </Typography>
+                  </InlineTextTooltip>
+                </Rhythm>
+              </Flex>
             </Flex>
           </Rhythm>
 
-          {viewportWidth < MOBILE_BREAKPOINT && (
-            <Rhythm my={4} p={3}>
-              <Paper full color={color || coords ? 'secondary' : 'transparent'} style={{ height: 50 }}>
-                <Flex full alignItems="center" direction="row" justifyContent="space-around">
-                  {coords && <Coords x={coords.x} y={coords.y} />}
-                  {color && <ColorPreview color={`#${color}`} />}
+          {source && previewWidth && previewHeight && (
+            <Fragment>
+              <Divider color="primary" orientation="horizontal" />
+
+              <div className={positionStyles['position-relative']}>
+                <PixelatorCanvas
+                  blur={blur}
+                  gridSize={gridSize}
+                  height={previewHeight}
+                  lined={showGridLines}
+                  onClick={handleCanvasClick}
+                  onMouseMove={handleCanvasMove}
+                  onMouseOut={handleCanvasExit}
+                  ref={canvasRef}
+                  setPixels={setPixels}
+                  source={source.src}
+                  width={previewWidth}
+                />
+                {highlight && pixelationFactor && (
+                  <HighlightSquare height={pixelationFactor} width={pixelationFactor} x={highlight.x} y={highlight.y} />
+                )}
+              </div>
+
+              <Divider color="primary" orientation="horizontal" />
+
+              <Rhythm mb={4} mt={5} px={8} py={4}>
+                <Flex full alignItems="center" direction="row" justifyContent="space-between">
+                  <Rhythm mr={10}>
+                    <Slider
+                      aria-label="Blur"
+                      max={60}
+                      min={0}
+                      onChange={handleBlurChange}
+                      step={5}
+                      value={blur}
+                      width="100%"
+                    >
+                      <Typography size="2xlarge">Blur</Typography>
+                    </Slider>
+                  </Rhythm>
+
+                  <IconButton
+                    color={showGridLines ? 'primary' : 'neutral'}
+                    onClick={toggleGridLines}
+                    shape="square"
+                    title="Show grid lines"
+                    weight="shaded"
+                  >
+                    <GridIcon scale="medium" />
+                  </IconButton>
                 </Flex>
-              </Paper>
-            </Rhythm>
+              </Rhythm>
+            </Fragment>
           )}
-        </Fragment>
+        </Flex>
+      </InputContainer>
+
+      {viewportWidth < MOBILE_BREAKPOINT && (
+        <Rhythm grouped my={4} style={{ height: 50, width: Math.max(previewWidth, previewHeight) }}>
+          {(coords || color) && (
+            <InputContainer bordered full>
+              <Flex full alignItems="center" direction="row" justifyContent="space-around">
+                {coords && <Coords x={coords.x} y={coords.y} />}
+                {color && <ColorPreview color={`#${color}`} />}
+              </Flex>
+            </InputContainer>
+          )}
+        </Rhythm>
       )}
-    </Flex>
+    </Fragment>
   );
 }

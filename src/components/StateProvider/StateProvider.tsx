@@ -39,15 +39,6 @@ export function StateProvider({ children }: StateProviderProps): JSX.Element {
     [],
   );
 
-  const setPixelate = useCallback<StateContextValue['setPixelate']>(
-    pixelate =>
-      dispatch({
-        type: ACTIONS.SET_PIXELATE,
-        pixelate,
-      }),
-    [],
-  );
-
   const setShowCanvas = useCallback<StateContextValue['setShowCanvas']>(
     showCanvas =>
       dispatch({
@@ -87,13 +78,12 @@ export function StateProvider({ children }: StateProviderProps): JSX.Element {
       setBlur,
       setGridSize,
       setLoading,
-      setPixelate,
       setShowCanvas,
       setShowGridLines,
       setValid,
       state,
     }),
-    [reset, setBlur, setGridSize, setLoading, setPixelate, setShowCanvas, setShowGridLines, setValid, state],
+    [reset, setBlur, setGridSize, setLoading, setShowCanvas, setShowGridLines, setValid, state],
   );
 
   return <StateContext.Provider value={value}>{children}</StateContext.Provider>;

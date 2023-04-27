@@ -27,12 +27,6 @@ export function StateReducer(state: StateValue, action: StateAction): StateValue
         loading: action.loading,
       };
 
-    case ACTIONS.SET_PIXELATE:
-      return {
-        ...state,
-        pixelate: action.pixelate,
-      };
-
     case ACTIONS.SET_SHOW_CANVAS:
       return {
         ...state,

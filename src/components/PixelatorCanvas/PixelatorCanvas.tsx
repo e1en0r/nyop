@@ -14,11 +14,12 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
     /** This is in multiples of PIXELS_PER_GRID, not just pixels */
     gridSize: GridSize;
     height: number;
+    /** Whether to render the grid lines */
     lined?: boolean;
     onError?: (error: string) => void;
     onRenderEnd?: () => void;
     onRenderStart?: () => void;
-    pixelate?: boolean;
+    /** The generated pixels can be used by the parent component */
     setPixels?: (p: Pixel[]) => void;
     source: string;
     width: number;
@@ -34,7 +35,6 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     onError,
     onRenderEnd,
     onRenderStart,
-    pixelate,
     setPixels,
     source,
     style,
@@ -126,14 +126,17 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
                 )
               : getOpaquePixelRgb(originalImageData, (x + y * sourcePixelation.factoredWidth) * 4);
 
-            pixels.push({
-              location: { x: x / sourcePixelation.pixelationFactor, y: y / sourcePixelation.pixelationFactor },
-              color: {
-                red,
-                green,
-                blue,
-              },
-            });
+            // the pixels can be used by the parent component if they've passed `setPixels`
+            if (setPixels) {
+              pixels.push({
+                location: { x: x / sourcePixelation.pixelationFactor, y: y / sourcePixelation.pixelationFactor },
+                color: {
+                  red,
+                  green,
+                  blue,
+                },
+              });
+            }
 
             destinationContext.fillStyle = `rgba(
               ${red},
@@ -157,7 +160,7 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     [blur, getAverageOpaquePixelRgb, setPixels],
   );
 
-  const renderLines = useCallback(
+  const renderGridLines = useCallback(
     (destinationContext: CanvasRenderingContext2D, destinationPixelation: PixelationFactor) => {
       if (destinationContext && destinationPixelation) {
         destinationContext.strokeStyle = 'lightgrey';
@@ -193,34 +196,15 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
           destinationCanvas.height = destinationPixelation.factoredHeight;
 
           if (destinationContext) {
-            // if an image should be pixelated then draw a separate source image for the best blur quality
-            if (pixelate) {
-              const sourceCanvas = document.createElement('canvas');
-              const sourceContext = getContext(sourceCanvas);
-              const sourcePixelation = getPixelationFactor(image.naturalWidth, image.naturalHeight, gridSize) || {};
-              sourceCanvas.width = sourcePixelation.factoredWidth;
-              sourceCanvas.height = sourcePixelation.factoredHeight;
+            // copy the source image to an off-screen canvas at (or near) its actual size
+            const sourceCanvas = document.createElement('canvas');
+            const sourceContext = getContext(sourceCanvas);
+            const sourcePixelation = getPixelationFactor(image.naturalWidth, image.naturalHeight, gridSize) || {};
+            sourceCanvas.width = sourcePixelation.factoredWidth;
+            sourceCanvas.height = sourcePixelation.factoredHeight;
 
-              if (sourceContext) {
-                sourceContext.drawImage(
-                  image,
-                  0,
-                  0,
-                  image.naturalWidth,
-                  image.naturalHeight,
-                  0,
-                  0,
-                  sourcePixelation.factoredWidth,
-                  sourcePixelation.factoredHeight,
-                );
-
-                // draw the final image off screen at the rendered size
-                renderPixelation(destinationContext, destinationPixelation, sourceContext, sourcePixelation);
-              } else {
-                return onError?.('Unable to get source context.');
-              }
-            } else {
-              destinationContext.drawImage(
+            if (sourceContext) {
+              sourceContext.drawImage(
                 image,
                 0,
                 0,
@@ -228,16 +212,21 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
                 image.naturalHeight,
                 0,
                 0,
-                destinationPixelation.factoredWidth,
-                destinationPixelation.factoredHeight,
+                sourcePixelation.factoredWidth,
+                sourcePixelation.factoredHeight,
               );
+
+              // draw an off-screen pixelated image at the final rendered size
+              renderPixelation(destinationContext, destinationPixelation, sourceContext, sourcePixelation);
+            } else {
+              return onError?.('Unable to get source context.');
             }
 
             if (lined) {
-              renderLines(destinationContext, destinationPixelation);
+              renderGridLines(destinationContext, destinationPixelation);
             }
 
-            // copy the off screen image to the on screen canvas
+            // copy the off-screen image to the on-screen canvas
             onScreenContext.drawImage(
               destinationCanvas,
               0,
@@ -269,17 +258,14 @@ export const PixelatorCanvas = React.forwardRef(function PixelatorCanvas(
     onError,
     onRenderEnd,
     onRenderStart,
-    pixelate,
-    renderLines,
+    renderGridLines,
     renderPixelation,
     source,
     width,
   ]);
 
   // render the image when the properties change
-  useEffect(() => {
-    render();
-  }, [render, pixelate, lined, source]);
+  useEffect(render, [render]);
 
   return (
     <div

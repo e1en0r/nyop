@@ -6,16 +6,44 @@
   display: grid;
   grid-column-gap: 1px;
   grid-row-gap: 1px;
+}
+
+.container--small {
   width: 70px;
   height: 70px;
 }
 
+.container--medium {
+  width: 110px;
+  height: 110px;
+}
+
 .item {
-  background: currentColor;
+  background-color: var(--size-picker-background-color);
   grid-area: auto;
-  opacity: 0.2;
 
   &.item--filled {
-    opacity: 1;
+    background-color: var(--size-picker-filled-color);
+  }
+
+  &.item--hovered {
+    background-color: var(--size-picker-hovered-color);
+    cursor: pointer;
+  }
+
+  &.item--light {
+    --size-picker-background-color: $light-color-BG20;
+    --size-picker-filled-color: $light-color-FG10;
+    --size-picker-hovered-color: $light-color-accent;
+  }
+
+  &.item--dark {
+    --size-picker-background-color: $dark-color-BG20;
+    --size-picker-filled-color: $light-color-FG10;
+    --size-picker-hovered-color: $dark-color-accent;
+  }
+
+  &:focus {
+    outline: none;
   }
 }

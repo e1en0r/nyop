@@ -9,7 +9,7 @@ import {
   SMALL_PAPER_SIDE_OFFSET,
 } from 'config/sizes';
 import { viewports } from 'config/viewports';
-import { PixelationFactor } from 'utils/types';
+import { GridSize, PixelationFactor } from 'utils/types';
 
 export const getImageSize = (width?: number): number =>
   Math.max(
@@ -27,11 +27,7 @@ export const getPreviewWidth = (width: number, height: number): number =>
   Math.max(PAGE_MIN_WIDTH, Math.min(PREVIEW_MAX_WIDTH, height * 0.8, width - getPaperSideOffset(width) * 2 || 0));
 
 // this rounds down the pixelation and returns a width and height refactored with that in mind
-export const getPixelationFactor = (
-  width: number,
-  height: number,
-  gridSize: { x: number; y: number },
-): PixelationFactor => {
+export const getPixelationFactor = (width: number, height: number, gridSize: GridSize): PixelationFactor => {
   const pixelationFactor = Math.floor(
     Math.max(Math.floor(width / (gridSize.x * PIXELS_PER_GRID)), Math.floor(height / (gridSize.y * PIXELS_PER_GRID))),
   );
@@ -42,3 +38,9 @@ export const getPixelationFactor = (
     factoredHeight: pixelationFactor * gridSize.y * PIXELS_PER_GRID,
   };
 };
+
+export const getWidthFromGridSize = (baseSize: number, gridSize: GridSize): number =>
+  gridSize.x >= gridSize.y ? baseSize : baseSize * (gridSize.x / gridSize.y);
+
+export const getHeightFromGridSize = (baseSize: number, gridSize: GridSize): number =>
+  gridSize.x >= gridSize.y ? baseSize * (gridSize.y / gridSize.x) : baseSize;

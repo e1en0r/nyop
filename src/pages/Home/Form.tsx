@@ -1,19 +1,13 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 import {
   Button,
-  Divider,
   Flex,
   Footer,
-  Header,
-  IconButton,
   IconToast,
-  InlineTextTooltip,
   Rhythm,
   SpinnerIcon,
   TimesIcon,
   ToastContext,
-  Toggle,
-  ToggleProps,
   Typography,
   useGetWidth,
   useSafeTimeout,
@@ -21,34 +15,29 @@ import {
 import { PIXELS_PER_GRID } from 'config/sizes';
 import { FileUpload, FileUploadPreview } from 'components/FileUpload';
 import { InputContainer } from 'components/InputContainer';
-import { SizePicker, SizePickerProps } from 'components/SizePicker';
+import { SizePickerItemCustom, SizePickerItemCustomProps } from 'components/SizePicker';
 import { useGetSource } from 'components/SourceProvider';
-import { useStateContext } from 'components/StateProvider';
-import { getFormWidth } from 'utils/size';
+import { StateValue, useStateContext } from 'components/StateProvider';
+import { getFormWidth, getHeightFromGridSize, getWidthFromGridSize } from 'utils/size';
 import { Pixel } from 'utils/types';
 import { createImageUploader } from 'utils/upload';
-import { HelpIcon } from 'icons/HelpIcon';
+
+const GRID_SIZE = 5;
+const ERROR_TOAST_ID = 'image-error';
 
 export function Form(): JSX.Element {
   const { setSafeTimeout } = useSafeTimeout();
   const [, setPixels] = useState<Pixel[]>();
   const [source, setSource] = useGetSource();
 
-  const {
-    state,
-    reset: resetState,
-    setGridSize,
-    setLoading,
-    setShowCanvas,
-    setShowGridLines,
-    setPixelate,
-    setValid,
-  } = useStateContext();
-  const { gridSize, showGridLines, loading, pixelate, valid } = state;
+  const { state, reset: resetState, setGridSize, setLoading, setShowCanvas, setValid } = useStateContext();
+  const { gridSize, loading, valid } = state;
 
   const viewportWidth = useGetWidth() || 0;
   const formWidth = getFormWidth(viewportWidth);
-  const formHeight = formWidth; // for now only square images are supported
+
+  const previewWidth = getWidthFromGridSize(formWidth, gridSize);
+  const previewHeight = getHeightFromGridSize(formWidth, gridSize);
 
   const reset = useCallback(() => {
     resetState();
@@ -57,17 +46,37 @@ export function Form(): JSX.Element {
     setValid(false);
   }, [resetState, setSource, setValid]);
 
-  const { createNotification } = useContext(ToastContext);
+  const { createNotification, removeNotification } = useContext(ToastContext);
 
   const displayErrorToast = useCallback(
     (title: string, content: string) => {
       createNotification(
-        <IconToast icon={TimesIcon} iconSize={20} level="danger" title={title}>
+        <IconToast contextId={ERROR_TOAST_ID} icon={TimesIcon} iconSize={20} level="danger" title={title}>
           {content}
         </IconToast>,
       );
     },
     [createNotification],
+  );
+
+  const validateProportions = useCallback(
+    (gridSize: StateValue['gridSize'], imageWidth?: number, imageHeight?: number): boolean => {
+      if (imageWidth && imageHeight) {
+        if (imageWidth === imageHeight * (gridSize.x / gridSize.y)) {
+          removeNotification(ERROR_TOAST_ID);
+          return true;
+        } else {
+          displayErrorToast(
+            'Invalid image proportions',
+            `The proportions for the uploaded image don't match the proportions required by the chosen layout. The end result would be skewed.`,
+          );
+        }
+      } else {
+        displayErrorToast('Invalid image size', 'Unable to determine the image size of the uploaded image.');
+      }
+      return false;
+    },
+    [displayErrorToast, removeNotification],
   );
 
   const handleFiles = useMemo(
@@ -78,23 +87,15 @@ export function Form(): JSX.Element {
             const image = new Image();
             image.onload = () => {
               if (image.naturalWidth && image.naturalHeight) {
-                if (image.naturalWidth === image.naturalHeight) {
-                  setValid(true);
-                  setSource({
-                    src: source,
-                    width: image.naturalWidth,
-                    height: image.naturalHeight,
-                  });
-                } else {
-                  setValid(false);
-                  displayErrorToast(
-                    'Invalid image size',
-                    `The image must be square. The size of the uploaded image is ${image.naturalWidth}x${image.naturalHeight}.`,
-                  );
-                }
+                setSource({
+                  src: source,
+                  width: image.naturalWidth,
+                  height: image.naturalHeight,
+                });
+
+                setValid(validateProportions(gridSize, image.naturalWidth, image.naturalHeight));
               } else {
                 setValid(false);
-                displayErrorToast('Invalid image size', 'Unable to determine the image size of the uploaded image.');
               }
             };
             image.src = source;
@@ -102,7 +103,15 @@ export function Form(): JSX.Element {
         },
         handleError: displayErrorToast,
       }),
-    [displayErrorToast, setSource, setValid],
+    [displayErrorToast, gridSize, setSource, setValid, validateProportions],
+  );
+
+  const handleGridSizeChange = useCallback<SizePickerItemCustomProps['onChange']>(
+    gridSize => {
+      setGridSize(gridSize);
+      setValid(source?.width && source?.height ? validateProportions(gridSize, source?.width, source?.height) : false);
+    },
+    [setGridSize, setValid, source?.height, source?.width, validateProportions],
   );
 
   // [TODO]: find non-blocking way to render canvas; until then use a timeout to show the spinner
@@ -111,97 +120,57 @@ export function Form(): JSX.Element {
     setSafeTimeout(() => setShowCanvas(true), 200);
   }, [setLoading, setSafeTimeout, setShowCanvas]);
 
-  const handleGridSizeChange = useCallback<SizePickerProps['onChange']>(
-    (_event, value) => {
-      setGridSize(value);
-    },
-    [setGridSize],
-  );
-
-  const toggleLined = useCallback<ToggleProps['onChange']>(
-    (_event, checked) => {
-      setShowGridLines(checked);
-    },
-    [setShowGridLines],
-  );
-
-  const togglePixelate = useCallback<ToggleProps['onChange']>(
-    (_event, checked) => {
-      setPixelate(!checked);
-    },
-    [setPixelate],
-  );
-
   return (
     <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: formWidth }}>
-      {source ? (
-        <FileUploadPreview onValidate={setValid} source={source.src} width={formWidth} />
-      ) : (
-        <FileUpload
-          accept="image/x-png,image/gif,image/jpeg, image/svg+xml"
-          handleFiles={handleFiles}
-          height={formHeight}
-          title="Drag and drop a square image here"
-        />
-      )}
-
-      <Rhythm grouped mt={9} style={{ width: formWidth }}>
-        <Rhythm px={8} py={6}>
+      <Rhythm grouped mb={9} style={{ width: formWidth }}>
+        <Rhythm px={8} py={10}>
           <InputContainer bordered full color="transparent">
-            <Header>
-              <Typography color="primary" size="5xlarge">
-                Choose your NYOP layout
-              </Typography>
+            <Flex alignItems="center" direction="row" justifyContent="space-between">
+              <Flex direction="column">
+                <Typography color="primary" size="5xlarge">
+                  Choose your NYOP layout
+                </Typography>
 
-              <InlineTextTooltip
-                hoverable
-                withoutTogglerFocusStyle
-                closeDelay={500}
-                layout="vertical"
-                position="left-top"
-                toggler={
-                  <Rhythm mx={1}>
-                    <IconButton color="neutral">
-                      <HelpIcon scale="large" />
-                    </IconButton>
-                  </Rhythm>
-                }
-                triangleBorderWidth={2}
-              >
-                <Typography size="xlarge">
-                  <p>
+                <Rhythm mt={4}>
+                  <Typography size="xlarge" variants={['line-height-comfy']} volume="quiet">
                     Each NYOP square is {`${PIXELS_PER_GRID}x${PIXELS_PER_GRID}`}. If you have a block of squares you
                     can draw a more detailed image.
-                  </p>
-                  <p>
-                    If your image is already pixelated you can choose to not pixelate it and just use the tool to copy
-                    the colors.
-                  </p>
-                </Typography>
-              </InlineTextTooltip>
-            </Header>
-            <Rhythm mt={5}>
-              <SizePicker full onChange={handleGridSizeChange} value={gridSize} />
-            </Rhythm>
+                  </Typography>
+                </Rhythm>
+              </Flex>
 
-            <Rhythm my={4}>
-              <Divider orientation="horizontal" variant="primary" />
-            </Rhythm>
-
-            <Flex wrap direction="row" justifyContent="space-between">
-              <Rhythm my={2}>
-                <Toggle checked={showGridLines} onChange={toggleLined}>
-                  {`Show grid lines`}
-                </Toggle>
-
-                <Toggle checked={!pixelate} onChange={togglePixelate}>
-                  {`Don't pixelate the image`}
-                </Toggle>
+              <Rhythm ml={8}>
+                <Flex inflexible>
+                  <SizePickerItemCustom
+                    filled={gridSize}
+                    onChange={handleGridSizeChange}
+                    rendered={{ x: GRID_SIZE, y: GRID_SIZE }}
+                    size="medium"
+                  />
+                </Flex>
               </Rhythm>
             </Flex>
           </InputContainer>
         </Rhythm>
       </Rhythm>
+
+      {source ? (
+        <FileUploadPreview
+          containerHeight={formWidth}
+          containerWidth={formWidth}
+          height={previewHeight}
+          onValidate={setValid}
+          source={source.src}
+          width={previewWidth}
+        />
+      ) : (
+        <FileUpload
+          accept="image/x-png,image/gif,image/jpeg, image/svg+xml"
+          handleFiles={handleFiles}
+          height={formWidth}
+          title="Drag and drop an image here"
+        />
+      )}
 
       <Rhythm mt={9}>
         <Footer>

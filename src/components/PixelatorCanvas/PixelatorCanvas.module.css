@@ -3,11 +3,11 @@
   position: relative;
 
   &.container--light {
-    --pixelator-container-background-color: $light-color-BG10;
+    --pixelator-container-background-color: $light-color-BG20;
   }
 
   &.container--dark {
-    --pixelator-container-background-color: $dark-color-BG10;
+    --pixelator-container-background-color: $dark-color-BG20;
   }
 }
 

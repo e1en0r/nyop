@@ -5,7 +5,6 @@ export enum StateActions {
   SET_BLUR = 'SET_BLUR',
   SET_GRID_SIZE = 'SET_GRID_SIZE',
   SET_LOADING = 'SET_LOADING',
-  SET_PIXELATE = 'SET_PIXELATE',
   SET_SHOW_CANVAS = 'SET_SHOW_CANVAS',
   SET_SHOW_GRID_LINES = 'SET_SHOW_GRID_LINES',
   SET_VALID = 'SET_VALID',
@@ -30,11 +29,6 @@ export type StateActionSetLoading = {
   loading: StateValue['loading'];
 };
 
-export type StateActionSetPixelate = {
-  type: StateActions.SET_PIXELATE;
-  pixelate?: StateValue['pixelate'];
-};
-
 export type StateActionSetShowCanvas = {
   type: StateActions.SET_SHOW_CANVAS;
   showCanvas?: StateValue['showCanvas'];
@@ -55,7 +49,6 @@ export type StateAction =
   | StateActionSetBlur
   | StateActionSetGridSize
   | StateActionSetLoading
-  | StateActionSetPixelate
   | StateActionSetShowCanvas
   | StateActionSetShowGridLines
   | StateActionSetValid;

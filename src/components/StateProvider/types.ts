@@ -4,6 +4,5 @@ export type StateValue = {
   blur?: number;
   gridSize: { x: number; y: number };
   loading?: boolean;
-  pixelate?: boolean;
   valid?: boolean;
 };

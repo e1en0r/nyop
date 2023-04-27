@@ -36,7 +36,7 @@ export function Canvas(): JSX.Element {
   const [source] = useGetSource();
 
   const { state, setShowCanvas, setShowGridLines, setBlur, setLoading } = useStateContext();
-  const { showGridLines, blur, gridSize, pixelate } = state;
+  const { showGridLines, blur, gridSize } = state;
 
   const viewportHeight = useGetHeight() || 0;
   const viewportWidth = useGetWidth() || 0;
@@ -159,7 +159,6 @@ export function Canvas(): JSX.Element {
               onClick={handleCanvasClick}
               onMouseMove={handleCanvasMove}
               onMouseOut={handleCanvasExit}
-              pixelate={pixelate}
               ref={canvasRef}
               setPixels={setPixels}
               source={source.src}
@@ -170,36 +169,33 @@ export function Canvas(): JSX.Element {
             )}
           </div>
 
-          {pixelate && (
-            <Rhythm mb={4} mt={5}>
-              <Flex full alignItems="center" direction="row" justifyContent="space-between">
-                <Rhythm mr={10}>
-                  <Slider
-                    aria-label="Blur"
-                    disabled={!pixelate}
-                    max={60}
-                    min={0}
-                    onChange={handleBlurChange}
-                    step={5}
-                    value={pixelate ? blur : 0}
-                    width="100%"
-                  >
-                    <Typography size="2xlarge">Blur</Typography>
-                  </Slider>
-                </Rhythm>
-
-                <IconButton
-                  color={showGridLines ? 'primary' : 'neutral'}
-                  onClick={toggleGridLines}
-                  shape="square"
-                  title="Show grid lines"
-                  weight="shaded"
+          <Rhythm mb={4} mt={5}>
+            <Flex full alignItems="center" direction="row" justifyContent="space-between">
+              <Rhythm mr={10}>
+                <Slider
+                  aria-label="Blur"
+                  max={60}
+                  min={0}
+                  onChange={handleBlurChange}
+                  step={5}
+                  value={blur}
+                  width="100%"
                 >
-                  <GridIcon scale="medium" />
-                </IconButton>
-              </Flex>
-            </Rhythm>
-          )}
+                  <Typography size="2xlarge">Blur</Typography>
+                </Slider>
+              </Rhythm>
+
+              <IconButton
+                color={showGridLines ? 'primary' : 'neutral'}
+                onClick={toggleGridLines}
+                shape="square"
+                title="Show grid lines"
+                weight="shaded"
+              >
+                <GridIcon scale="medium" />
+              </IconButton>
+            </Flex>
+          </Rhythm>
 
           {viewportWidth < MOBILE_BREAKPOINT && (
             <Rhythm my={4} p={3}>

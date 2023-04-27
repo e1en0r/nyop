@@ -21,9 +21,6 @@ export function SizePickerItemCustom({ filled, onChange, ...props }: SizePickerI
 
   const getItemProps = useCallback<NonNullable<SizePickerItemProps['getItemProps']>>(
     item => ({
-      //className: hovered
-      //  ? (item.x < hovered?.x && item.y < hovered?.y && styles['item--hovered']) || undefined
-      //  : (item.x < filled.x && item.y < filled.y && styles['item--filled']) || undefined,
       className: cx({
         [styles['item--hovered']]: hovered && item.x < hovered?.x && item.y < hovered?.y,
         [styles['item--filled']]: item.x < filled.x && item.y < filled.y,

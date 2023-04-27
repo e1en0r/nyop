@@ -11,3 +11,5 @@ export type Pixel = {
 };
 
 export type PixelationFactor = { pixelationFactor: number; factoredWidth: number; factoredHeight: number };
+
+export type GridSize = { x: number; y: number };

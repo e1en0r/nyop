@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'reac
 import { ThemeProps, useThemeId } from '@phork/phorkit';
 import { getAveragePixelRgb, getOpaquePixelRgb } from 'utils/color';
 import { getPixelationFactor } from 'utils/size';
-import { Pixel, PixelationFactor } from 'utils/types';
+import { GridSize, Pixel, PixelationFactor } from 'utils/types';
 import styles from './PixelatorCanvas.module.css';
 import { PixelatorCanvasHandles } from './types';
 
@@ -12,7 +12,7 @@ export type PixelatorCanvasProps = React.HTMLAttributes<HTMLDivElement> &
     /** This will get the average of the pixel and its neighbors */
     blur?: number;
     /** This is in multiples of PIXELS_PER_GRID, not just pixels */
-    gridSize: { x: number; y: number };
+    gridSize: GridSize;
     height: number;
     lined?: boolean;
     onError?: (error: string) => void;

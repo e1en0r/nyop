@@ -22,9 +22,10 @@ import { PixelatorCanvas, PixelatorCanvasHandles, useMouseEvents } from 'compone
 import { ShowCodeButton } from 'components/ShowCodeButton/ShowCodeButton';
 import { useGetSource } from 'components/SourceProvider';
 import { useStateContext } from 'components/StateProvider';
-import { getPixelationFactor, getPreviewWidth } from 'utils/size';
+import { getPixelationFactor, getPreviewWidth, getHeightFromGridSize, getWidthFromGridSize } from 'utils/size';
 import { Pixel } from 'utils/types';
 import { CodeIcon } from 'icons/CodeIcon';
+import { GridIcon } from 'icons/GridIcon';
 import { InfoIcon } from 'icons/InfoIcon';
 
 const MOBILE_BREAKPOINT = viewports.xsmall.max;
@@ -34,15 +35,16 @@ export function Canvas(): JSX.Element {
   const [pixels, setPixels] = useState<Pixel[]>();
   const [source] = useGetSource();
 
-  const { state, setShowCanvas, setBlur, setLoading } = useStateContext();
+  const { state, setShowCanvas, setShowGridLines, setBlur, setLoading } = useStateContext();
   const { showGridLines, blur, gridSize, pixelate } = state;
 
   const viewportHeight = useGetHeight() || 0;
   const viewportWidth = useGetWidth() || 0;
 
   // this is the ideal size but because the pixelation factor gets rounded it's not the actual size used
-  const tempPreviewWidth = getPreviewWidth(viewportWidth, viewportHeight);
-  const tempPreviewHeight = tempPreviewWidth; // for now only square images are supported
+  const previewBaseWidth = getPreviewWidth(viewportWidth, viewportHeight);
+  const tempPreviewWidth = getWidthFromGridSize(previewBaseWidth, gridSize);
+  const tempPreviewHeight = getHeightFromGridSize(previewBaseWidth, gridSize);
 
   const {
     pixelationFactor,
@@ -67,6 +69,10 @@ export function Canvas(): JSX.Element {
     [setBlur],
   );
 
+  const toggleGridLines = useCallback(() => {
+    setShowGridLines(!showGridLines);
+  }, [setShowGridLines, showGridLines]);
+
   const setHideCanvas = useCallback(() => {
     resetMouseData();
     setLoading(false);
@@ -74,7 +80,12 @@ export function Canvas(): JSX.Element {
   }, [resetMouseData, setLoading, setShowCanvas]);
 
   return (
-    <Flex alignItems="center" direction="column" justifyContent="center" style={{ width: previewWidth }}>
+    <Flex
+      alignItems="center"
+      direction="column"
+      justifyContent="center"
+      style={{ width: Math.max(previewWidth, previewHeight) }}
+    >
       <Rhythm mb={4}>
         <Flex full alignItems="center" justifyContent="space-between">
           <Flex alignItems="center" direction="row" justifyContent="flex-start">
@@ -126,6 +137,10 @@ export function Canvas(): JSX.Element {
               >
                 <Typography size="xlarge">
                   Clicking anywhere in the canvas will copy its color to your clipboard.
+                  <br />
+                  <br />
+                  The <strong>&lt;/&gt;</strong> icon will start the process that allows you to copy the image to the
+                  NYOP canvas.
                 </Typography>
               </InlineTextTooltip>
             </Rhythm>
@@ -157,18 +172,32 @@ export function Canvas(): JSX.Element {
 
           {pixelate && (
             <Rhythm mb={4} mt={5}>
-              <Slider
-                aria-label="Blur"
-                disabled={!pixelate}
-                max={60}
-                min={0}
-                onChange={handleBlurChange}
-                step={5}
-                value={pixelate ? blur : 0}
-                width="100%"
-              >
-                <Typography size="2xlarge">Blur</Typography>
-              </Slider>
+              <Flex full alignItems="center" direction="row" justifyContent="space-between">
+                <Rhythm mr={10}>
+                  <Slider
+                    aria-label="Blur"
+                    disabled={!pixelate}
+                    max={60}
+                    min={0}
+                    onChange={handleBlurChange}
+                    step={5}
+                    value={pixelate ? blur : 0}
+                    width="100%"
+                  >
+                    <Typography size="2xlarge">Blur</Typography>
+                  </Slider>
+                </Rhythm>
+
+                <IconButton
+                  color={showGridLines ? 'primary' : 'neutral'}
+                  onClick={toggleGridLines}
+                  shape="square"
+                  title="Show grid lines"
+                  weight="shaded"
+                >
+                  <GridIcon scale="medium" />
+                </IconButton>
+              </Flex>
             </Rhythm>
           )}
 

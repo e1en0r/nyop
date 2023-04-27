@@ -1,12 +1,14 @@
 .container {
   background-color: var(--file-upload-preview-background-color);
+  border-radius: 6px;
+  overflow: hidden;
   position: relative;
+}
 
-  &.imageContainer--light {
-    --file-upload-preview-background-color: $light-color-BG10;
-  }
+.container--light {
+  --file-upload-preview-background-color: $light-color-BG20;
+}
 
-  &.imageContainer--dark {
-    --file-upload-preview-background-color: $dark-color-BG10;
-  }
+.container--dark {
+  --file-upload-preview-background-color: $dark-color-BG20;
 }
